@@ -228,8 +228,8 @@
 
     console.log(
       '%c 🎓 GRADUATION INVITATION // HUTECH IT 2026 %c System initialized.',
-      'background: #00f0ff; color: #000; font-weight: bold; padding: 4px 8px; border-radius: 3px;',
-      'color: #38bdf8;'
+      'background: #ff2e93; color: #000; font-weight: bold; padding: 4px 8px; border-radius: 3px;',
+      'color: #ff85c0;'
     );
   });
 })();

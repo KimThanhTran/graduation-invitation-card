@@ -74,9 +74,9 @@
       const particleCount = Math.min(window.innerWidth < 640 ? 70 : 120, 140);
       
       const colors = [
-        '#00f0ff', // Cyber cyan
-        '#38bdf8', // Electric blue
-        '#a855f7', // Neon purple
+        '#ff2e93', // Hot pink
+        '#ff85c0', // Soft pink
+        '#e11d74', // Deep rose
         '#facc15', // Radiant gold
         '#f43f5e', // HUTECH red accent
         '#ffffff'  // Pure star white
