@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>GRADUATION INVITATION | Khoa Công nghệ thông tin - HUTECH</title>
+
+  <!-- Meta SEO & Social Sharing -->
+  <meta name="description"
+    content="Personal Digital Graduation Invitation Card - Faculty of Information Technology, HUTECH University. November 1, 2026 at Thu Duc Campus." />
+  <meta name="theme-color" content="#050711" />
+  <meta property="og:title" content="GRADUATION INVITATION — HUTECH University IT" />
+  <meta property="og:description"
+    content="Trân trọng kính mời bạn đến tham dự Lễ Tốt Nghiệp — Khoa Công nghệ thông tin, Đại học HUTECH." />
+  <meta property="og:image" content="assets/images/image.png" />
+  <meta property="og:type" content="website" />
+
+  <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans, JetBrains Mono, Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <!-- Main Styling -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+
+<body>
+  <!-- Ambient Audio Elements (Web Audio API Synthesized, no external audio file dependencies) -->
+
+  <!-- Fullscreen Matrix Canvas Background -->
+  <canvas id="matrix-canvas" aria-hidden="true"></canvas>
+
+  <!-- Ambient Glowing Blobs in Background -->
+  <div class="ambient-glow glow-cyan" aria-hidden="true"></div>
+  <div class="ambient-glow glow-purple" aria-hidden="true"></div>
+
+  <!-- Celebratory Confetti / Particle Canvas (Activated on RSVP Confirm) -->
+  <canvas id="celebration-canvas" aria-hidden="true"></canvas>
+
+  <!-- Toast Notification Container -->
+  <div id="cyber-toast" class="cyber-toast" role="status" aria-live="polite"></div>
+
+  <!-- Main Outer Viewport Container -->
+  <main class="page-wrapper">
+    <!-- Futuristic Glassmorphic Invitation Card Container -->
+    <article class="invitation-card" id="invitation-card">
+
+      <!-- Top HUD Header Status Bar -->
+      <header class="card-hud-header">
+        <div class="hud-tag">
+          <span class="status-indicator"></span>
+          <span class="hud-text">SYS.INVITATION // PROTOCOL 2026</span>
+        </div>
+        <div class="hud-actions">
+          <button id="sound-toggle-btn" class="hud-icon-btn" aria-label="Toggle Sound Effects"
+            title="Bật/Tắt âm thanh hiệu ứng">
+            <span class="sound-icon sound-muted">🔇</span>
+            <span class="sound-text">FX OFF</span>
+          </button>
+          <button id="share-btn" class="hud-icon-btn" aria-label="Share Invitation Link" title="Chia sẻ lời mời">
+            <span class="share-icon">🔗</span>
+            <span class="share-text">SHARE</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Corner Tech Brackets (Cyber Sci-Fi HUD accents) -->
+      <div class="tech-corner corner-tl" aria-hidden="true"></div>
+      <div class="tech-corner corner-tr" aria-hidden="true"></div>
+      <div class="tech-corner corner-bl" aria-hidden="true"></div>
+      <div class="tech-corner corner-br" aria-hidden="true"></div>
+
+      <!-- Hero Visual Showcase Section -->
+      <section class="hero-showcase">
+        <!-- Hologram Framed Graduate Photo -->
+        <div class="photo-frame-container" id="photo-container">
+          <div class="photo-glow-halo" aria-hidden="true"></div>
+
+          <div class="photo-frame">
+            <!-- Tech Frame Elements -->
+            <div class="photo-scanner-line" aria-hidden="true"></div>
+            <div class="photo-corner pc-tl"></div>
+            <div class="photo-corner pc-tr"></div>
+            <div class="photo-corner pc-bl"></div>
+            <div class="photo-corner pc-br"></div>
+
+            <img src="assets/images/image.png" alt="HUTECH University Graduate" class="graduate-img" id="graduate-img"
+              loading="eager" />
+
+            <!-- Photo Watermark / Tech Overlay -->
+            <div class="photo-overlay-badge">
+              <span class="badge-dot"></span>
+              <span class="badge-text">VALEDICTORIAN // 2026</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Title & Academic Identity -->
+        <div class="hero-identity">
+          <div class="faculty-badge">
+            <span class="faculty-icon">⚡</span>
+            <span class="faculty-name">FACULTY OF INFORMATION TECHNOLOGY</span>
+          </div>
+
+          <h1 class="main-title">
+            <span class="title-grad">GRADUATION</span>
+            <span class="title-sub">INVITATION</span>
+          </h1>
+
+          <div class="university-banner">
+            <h2 class="university-name">Khoa Công nghệ thông tin - HUTECH</h2>
+            <p class="ceremony-tagline">Lễ Trao Bằng Tốt Nghiệp Kỹ Sư Công Nghệ Thông Tin</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Divider with Cyber Pulse Line -->
+      <div class="cyber-divider" aria-hidden="true">
+        <span class="divider-node"></span>
+      </div>
+
+      <!-- Event Details HUD Grid -->
+      <section class="event-details-section" aria-label="Event Information">
+        <div class="details-grid">
+
+          <!-- Event Date Card -->
+          <div class="detail-card">
+            <div class="card-icon-wrapper date-icon">
+              <span class="cyber-icon">📅</span>
+            </div>
+            <div class="card-content">
+              <span class="detail-label">SYS // DATE</span>
+              <h3 class="detail-value">November 1, 2026</h3>
+              <p class="detail-sub">Chủ Nhật, ngày 01 tháng 11</p>
+            </div>
+          </div>
+
+          <!-- Event Time Card -->
+          <div class="detail-card">
+            <div class="card-icon-wrapper time-icon">
+              <span class="cyber-icon">⏰</span>
+            </div>
+            <div class="card-content">
+              <span class="detail-label">SYS // TIME</span>
+              <h3 class="detail-value">08:00 AM</h3>
+              <p class="detail-sub">Giờ đón khách: 07:30 AM</p>
+            </div>
+          </div>
+
+          <!-- Event Location Card -->
+          <div class="detail-card location-card">
+            <div class="card-icon-wrapper location-icon">
+              <span class="cyber-icon">📍</span>
+            </div>
+            <div class="card-content">
+              <span class="detail-label">SYS // LOCATION</span>
+              <h3 class="detail-value">Thu Duc Campus</h3>
+              <p class="detail-sub">HUTECH Khu Công nghệ cao TP.HCM</p>
+            </div>
+            <a href="https://maps.google.com/?q=HUTECH+Thu+Duc+Campus+Khu+Cong+nghe+cao" target="_blank"
+              rel="noopener noreferrer" class="map-link-chip" title="Mở Google Maps chỉ đường">
+              <span>BẢN ĐỒ</span> ↗
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Digital Countdown Display Section -->
+      <section class="countdown-section" aria-label="Countdown to Ceremony">
+        <div class="section-header">
+          <span class="section-tag">// COMMENCEMENT COUNTDOWN</span>
+          <span class="target-date-pill">TARGET: 2026.11.01 08:00:00 (UTC+7)</span>
+        </div>
+
+        <div class="countdown-hud-display" id="countdown-hud">
+          <!-- Days Block -->
+          <div class="countdown-unit" data-unit="days">
+            <div class="digit-box">
+              <span class="digit-glow" id="days-glow">00</span>
+              <span class="digit-value" id="days">00</span>
+            </div>
+            <span class="unit-label">DAYS</span>
+            <span class="unit-sub">NGÀY</span>
+          </div>
+
+          <div class="countdown-separator">:</div>
+
+          <!-- Hours Block -->
+          <div class="countdown-unit" data-unit="hours">
+            <div class="digit-box">
+              <span class="digit-glow" id="hours-glow">00</span>
+              <span class="digit-value" id="hours">00</span>
+            </div>
+            <span class="unit-label">HOURS</span>
+            <span class="unit-sub">GIỜ</span>
+          </div>
+
+          <div class="countdown-separator">:</div>
+
+          <!-- Minutes Block -->
+          <div class="countdown-unit" data-unit="minutes">
+            <div class="digit-box">
+              <span class="digit-glow" id="minutes-glow">00</span>
+              <span class="digit-value" id="minutes">00</span>
+            </div>
+            <span class="unit-label">MINUTES</span>
+            <span class="unit-sub">PHÚT</span>
+          </div>
+
+          <div class="countdown-separator">:</div>
+
+          <!-- Seconds Block -->
+          <div class="countdown-unit" data-unit="seconds">
+            <div class="digit-box">
+              <span class="digit-glow" id="seconds-glow">00</span>
+              <span class="digit-value" id="seconds">00</span>
+            </div>
+            <span class="unit-label">SECONDS</span>
+            <span class="unit-sub">GIÂY</span>
+          </div>
+        </div>
+
+        <div class="countdown-status" id="countdown-status">
+          <span class="pulse-radar"></span>
+          <span class="status-msg">TIME SYNCED WITH HUTECH COMMENCEMENT CLOCK</span>
+        </div>
+      </section>
+
+      <!-- Cyber Divider -->
+      <div class="cyber-divider" aria-hidden="true">
+        <span class="divider-node"></span>
+      </div>
+
+      <!-- Guest Verification & RSVP Interactive Terminal -->
+      <section class="rsvp-section" id="rsvp-section" aria-label="RSVP Response">
+        <div class="section-header">
+          <span class="section-tag">// GUEST VERIFICATION & RSVP</span>
+          <span class="status-badge" id="rsvp-state-badge">STATE: IDLE</span>
+        </div>
+
+        <!-- RSVP Form State Container -->
+        <div class="rsvp-terminal" id="rsvp-terminal">
+
+          <!-- STATE 1: IDLE / INPUT STATE -->
+          <form class="rsvp-view rsvp-idle-view active" id="rsvp-form" novalidate>
+            <div class="input-hud-group">
+              <label for="guest-name-input" class="input-label">
+                <span class="label-primary">Enter your full name</span>
+                <span class="label-sub">Nhập họ tên để xác nhận lời mời</span>
+              </label>
+
+              <div class="cyber-input-wrapper" id="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input type="text" id="guest-name-input" name="guestName"
+                  placeholder="Ví dụ: Thầy Cô / Nguyễn Văn A / Bạn thân..." autocomplete="name" maxlength="60"
+                  required />
+                <button type="button" id="clear-input-btn" class="clear-btn" aria-label="Xóa tên"
+                  title="Clear input">✕</button>
+              </div>
+              <div class="input-feedback" id="input-feedback" aria-live="polite"></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="rsvp-actions">
+              <button type="submit" id="btn-accept" class="btn btn-cyber-primary">
+                <span class="btn-scan-line"></span>
+                <span class="btn-icon">✓</span>
+                <span class="btn-text">ACCEPT — XÁC NHẬN THAM DỰ</span>
+              </button>
+
+              <button type="button" id="btn-decline" class="btn btn-cyber-secondary">
+                <span class="btn-icon">✕</span>
+                <span class="btn-text">DECLINE</span>
+              </button>
+            </div>
+
+            <p class="rsvp-privacy-note">
+              🔒 Phản hồi của bạn sẽ được lưu vào hệ thống khách mời danh dự HUTECH IT 2026.
+            </p>
+          </form>
+
+          <!-- STATE 2: SCANNING / VERIFYING STATE -->
+          <div class="rsvp-view rsvp-scanning-view" id="rsvp-scanning" aria-live="assertive">
+            <div class="radar-scan-box">
+              <div class="radar-circle"></div>
+              <div class="radar-beam"></div>
+              <div class="radar-icon">⚡</div>
+            </div>
+            <h4 class="scan-status-title">SYNCHRONIZING GUEST CREDENTIALS...</h4>
+            <div class="scan-progress-bar">
+              <div class="progress-fill" id="scan-progress-fill"></div>
+            </div>
+            <p class="scan-subtitle" id="scan-subtitle">Đang xác thực thông tin khách mời với cơ sở dữ liệu...</p>
+          </div>
+
+          <!-- STATE 3: ACCEPT CONFIRMED SUCCESS STATE -->
+          <div class="rsvp-view rsvp-confirmed-view" id="rsvp-confirmed" aria-live="polite">
+            <div class="cyber-ticket">
+              <div class="ticket-header">
+                <span class="status-code">STATUS 200</span>
+                <span class="ticket-type">OFFICIAL PASS // CONFIRMED</span>
+              </div>
+
+              <div class="ticket-body">
+                <div class="success-icon-badge">✓</div>
+                <h3 class="success-heading">ATTENDANCE CONFIRMED</h3>
+                <p class="guest-greet">Trân trọng chào đón: <strong id="confirmed-guest-name"
+                    class="highlight-name">Khách Mời</strong></p>
+                <div class="venue-promise">
+                  <span class="location-beacon">📍</span>
+                  <span class="location-text">See you at Thu Duc Campus!</span>
+                </div>
+                <p class="venue-sub">Hẹn gặp bạn tại khuôn viên Đại học HUTECH Khu Công nghệ cao TP.HCM vào lúc 08:00
+                  AM, ngày 01/11/2026!</p>
+              </div>
+
+              <!-- Ticket Tech Meta & Barcode representation -->
+              <div class="ticket-footer">
+                <div class="ticket-meta">
+                  <div class="meta-item">
+                    <span class="m-label">CEREMONY</span>
+                    <span class="m-val">GRADUATION 2026</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="m-label">ZONE</span>
+                    <span class="m-val">GUEST AREA — HALL A</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="m-label">GATE OPEN</span>
+                    <span class="m-val">07:30 AM</span>
+                  </div>
+                </div>
+
+                <div class="cyber-barcode" aria-hidden="true">
+                  <div class="barcode-lines"></div>
+                  <span class="barcode-id" id="ticket-pass-id">HUT-IT-2026-PASS-XXXX</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Follow-up Actions -->
+            <div class="confirmed-actions">
+              <button type="button" id="btn-add-calendar" class="btn btn-cyber-secondary btn-sm">
+                <span>📅</span> Thêm vào lịch (Google / Apple Calendar)
+              </button>
+              <button type="button" id="btn-edit-rsvp" class="btn btn-cyber-text btn-sm">
+                <span>↺</span> Đổi thông tin phản hồi
+              </button>
+            </div>
+          </div>
+
+          <!-- STATE 4: DECLINE CONFIRMED STATE -->
+          <div class="rsvp-view rsvp-declined-view" id="rsvp-declined" aria-live="polite">
+            <div class="decline-box">
+              <div class="decline-icon-badge">ℹ️</div>
+              <span class="status-code status-code-muted">SYS // RESPONSE LOGGED</span>
+              <h3 class="decline-heading">INVITATION RESPONSE RECEIVED</h3>
+              <p class="decline-guest">Kính gửi: <strong id="declined-guest-name" class="highlight-name">Khách
+                  Mời</strong></p>
+              <p class="decline-message">Thank you for letting me know.</p>
+              <p class="decline-sub">
+                Cảm ơn bạn đã phản hồi! Dù bạn không thể trực tiếp tham dự, sự quan tâm và lời chúc của bạn luôn là niềm
+                vinh hạnh to lớn cho tôi trên chặng đường mới.
+              </p>
+
+              <div class="decline-actions">
+                <button type="button" id="btn-reconsider" class="btn btn-cyber-secondary btn-sm">
+                  <span>↺</span> Thay đổi quyết định / Change Decision
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Card Footer -->
+      <footer class="card-hud-footer">
+        <div class="footer-left">
+          <span class="footer-id">HASH: 0xHUTECH_IT_CLASS2026</span>
+          <span class="footer-copy">HUTECH University — Khoa Công nghệ thông tin</span>
+        </div>
+        <div class="footer-right">
+          <span class="status-dot"></span>
+          <span class="sys-ok">SECURE DIGITAL INVITATION</span>
+        </div>
+      </footer>
+
+    </article>
+  </main>
+
+  <!-- Modular Scripts as specified -->
+  <script src="assets/js/matrix.js"></script>
+  <script src="assets/js/countdown.js"></script>
+  <script src="assets/js/rsvp.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+
+</html>
