@@ -782,6 +782,7 @@
       if (this.ticketPassIdEl) this.ticketPassIdEl.textContent = passId;
 
       this.setState('confirmed');
+      window.BgMusic && window.BgMusic.duck();
       window.SoundFX && window.SoundFX.playSuccess();
 
       // Launch celebratory particle confetti

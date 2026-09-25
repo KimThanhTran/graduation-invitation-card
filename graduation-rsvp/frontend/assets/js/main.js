@@ -110,6 +110,88 @@
   }
 
   /* ========================================================
+   * Background Music
+   * On by default, but browsers only allow playback after the
+   * guest's first tap/click/key, so it starts on that gesture.
+   * Turning it off is remembered for later visits.
+   * ======================================================== */
+  const MUSIC_PREF_KEY = 'hutech_grad_music';
+
+  class BackgroundMusic {
+    constructor(src) {
+      this.btn = document.getElementById('music-toggle-btn');
+      if (!this.btn) return;
+
+      this.volume = 0.5;
+      this.audio = new Audio(src);
+      this.audio.loop = true;
+      this.audio.preload = 'auto';
+      this.audio.volume = this.volume;
+
+      let pref = null;
+      try { pref = localStorage.getItem(MUSIC_PREF_KEY); } catch (e) { /* storage blocked */ }
+      this.wantsMusic = pref !== 'off';
+      this.render();
+
+      this.btn.addEventListener('click', () => this.toggle());
+
+      // Start on the first gesture anywhere (the button handles its own click)
+      const events = ['pointerdown', 'keydown', 'touchstart'];
+      const onFirstGesture = (e) => {
+        events.forEach(ev => document.removeEventListener(ev, onFirstGesture, true));
+        if (this.btn.contains(e.target)) return;
+        if (this.wantsMusic) this.play();
+      };
+      events.forEach(ev => document.addEventListener(ev, onFirstGesture, true));
+
+      // Pause while the tab is in the background (phones keep playing otherwise)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) this.audio.pause();
+        else if (this.wantsMusic && this.started) this.play();
+      });
+    }
+
+    play() {
+      this.audio.play().then(() => {
+        this.started = true;
+        this.render();
+      }).catch(() => {
+        // Blocked until a real user gesture; the next tap on the button will retry
+      });
+    }
+
+    toggle() {
+      // Follow what the guest sees: a silent button means "turn on", even before the first play
+      this.wantsMusic = this.audio.paused;
+      try { localStorage.setItem(MUSIC_PREF_KEY, this.wantsMusic ? 'on' : 'off'); } catch (e) { /* storage blocked */ }
+
+      if (this.wantsMusic) {
+        this.play();
+        window.showCyberToast('🎵 Nhạc nền: BẬT');
+      } else {
+        this.audio.pause();
+        window.showCyberToast('🎵 Nhạc nền: TẮT');
+      }
+      this.render();
+    }
+
+    /** Briefly lower the music so a celebration sound can be heard */
+    duck(ms = 2500) {
+      if (!this.audio || this.audio.paused) return;
+      this.audio.volume = this.volume * 0.3;
+      clearTimeout(this.duckTimer);
+      this.duckTimer = setTimeout(() => { this.audio.volume = this.volume; }, ms);
+    }
+
+    render() {
+      const playing = this.wantsMusic && !this.audio.paused;
+      this.btn.classList.toggle('sound-active', playing);
+      this.btn.setAttribute('aria-pressed', String(playing));
+      this.btn.querySelector('.music-text').textContent = playing ? 'MUSIC ON' : 'MUSIC OFF';
+    }
+  }
+
+  /* ========================================================
    * Cyber Toast Notification
    * ======================================================== */
   window.showCyberToast = function (message, duration = 3000) {
@@ -198,6 +280,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     // 1. Initialize Sound FX
     window.SoundFX = new CyberAudioEngine();
+    window.BgMusic = new BackgroundMusic('assets/audio/nhacnen.mp4');
 
     // 2. Initialize Matrix Background
     if (window.MatrixRain) {

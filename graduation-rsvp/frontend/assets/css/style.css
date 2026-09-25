@@ -1644,6 +1644,18 @@ body {
 }
 
 @media (max-width: 480px) {
+  /* Icon-only HUD buttons so music / FX / share fit on one row */
+  .hud-icon-btn .music-text,
+  .hud-icon-btn .sound-text,
+  .hud-icon-btn .share-text {
+    display: none;
+  }
+
+  .hud-icon-btn {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.9rem;
+  }
+
   .photo-frame-container {
     width: 175px;
     height: 245px;
