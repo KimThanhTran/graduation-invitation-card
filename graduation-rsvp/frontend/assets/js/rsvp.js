@@ -19,12 +19,21 @@
   // Google Apps Script Web App URL (see backend/README.md). Paste the /exec URL here.
   const API_URL = 'https://script.google.com/macros/s/AKfycbxWwwsPYZffKC5PvjCm1gssKdZofaiHLcbv91wf_fkfFwWWKvpTW4SciR1YnVUWg7VJ/exec';
 
+  // Vietnamese mobile number -> "0xxxxxxxxx", or null if invalid. Accepts +84 / 84 prefixes.
+  // Keep in sync with normalizePhone() in backend/Code.gs
+  function normalizePhone(raw) {
+    let p = String(raw || '').replace(/[\s.\-()]/g, '');
+    if (p.startsWith('+84')) p = '0' + p.slice(3);
+    else if (p.startsWith('84') && p.length === 11) p = '0' + p.slice(2);
+    return /^0\d{9}$/.test(p) ? p : null;
+  }
+
   /**
    * Send an RSVP to the Apps Script backend.
-   * New names are added to the sheet; existing names get their status updated.
+   * New phone numbers are added to the sheet; existing ones get their row updated.
    * Returns { saved: true, isNew, name } | { error }
    */
-  async function submitRsvp(name, status) {
+  async function submitRsvp(name, phone, status) {
     if (!API_URL) {
       throw new Error('API_URL is not configured in rsvp.js');
     }
@@ -34,6 +43,7 @@
       body: JSON.stringify({
         action: 'rsvp',
         name: name,
+        phone: phone,
         status: status === 'confirmed' ? 'Accepted' : 'Declined'
       })
     });
@@ -185,6 +195,8 @@
       // Elements
       this.nameInput = document.getElementById('guest-name-input');
       this.inputWrapper = document.getElementById('input-wrapper');
+      this.phoneInput = document.getElementById('guest-phone-input');
+      this.phoneWrapper = document.getElementById('phone-wrapper');
       this.clearBtn = document.getElementById('clear-input-btn');
       this.feedbackEl = document.getElementById('input-feedback');
       this.btnAccept = document.getElementById('btn-accept');
@@ -208,6 +220,7 @@
       this.currentState = 'idle';
       this.guestData = {
         name: '',
+        phone: '',
         status: null,
         passId: '',
         timestamp: null
@@ -227,6 +240,8 @@
         this.clearFeedback();
         this.toggleClearBtn();
       });
+
+      this.phoneInput.addEventListener('input', () => this.clearFeedback());
 
       this.clearBtn.addEventListener('click', () => {
         this.nameInput.value = '';
@@ -266,13 +281,13 @@
       }
     }
 
-    showFeedback(message, isError = true) {
+    showFeedback(message, isError = true, wrapper = this.inputWrapper) {
       if (!this.feedbackEl) return;
       this.feedbackEl.textContent = message;
       this.feedbackEl.className = `input-feedback ${isError ? 'feedback-error' : 'feedback-success'}`;
-      if (isError) {
-        this.inputWrapper.classList.add('input-shake');
-        setTimeout(() => this.inputWrapper.classList.remove('input-shake'), 600);
+      if (isError && wrapper) {
+        wrapper.classList.add('input-shake');
+        setTimeout(() => wrapper.classList.remove('input-shake'), 600);
       }
     }
 
@@ -308,40 +323,53 @@
       }
     }
 
-    handleAccept() {
-      const rawName = this.nameInput.value.trim();
-      if (!rawName) {
-        this.showFeedback('Vui lòng nhập họ và tên của bạn để xác nhận.');
-        this.nameInput.focus();
+    /**
+     * Validate name + phone. Returns { name, phone } or null (after showing an error).
+     */
+    validateInputs() {
+      const fail = (message, input, wrapper) => {
+        this.showFeedback(message, true, wrapper);
+        input.focus();
         window.SoundFX && window.SoundFX.playError();
-        return;
+        return null;
+      };
+
+      const name = this.nameInput.value.trim();
+      if (!name) {
+        return fail('Vui lòng nhập họ và tên của bạn.', this.nameInput, this.inputWrapper);
+      }
+      if (name.length < 2) {
+        return fail('Họ và tên quá ngắn. Vui lòng nhập tối thiểu 2 ký tự.', this.nameInput, this.inputWrapper);
       }
 
-      if (rawName.length < 2) {
-        this.showFeedback('Họ và tên quá ngắn. Vui lòng nhập tối thiểu 2 ký tự.');
-        this.nameInput.focus();
-        window.SoundFX && window.SoundFX.playError();
-        return;
+      if (!this.phoneInput.value.trim()) {
+        return fail('Vui lòng nhập số điện thoại để tiện liên lạc.', this.phoneInput, this.phoneWrapper);
       }
+      const phone = normalizePhone(this.phoneInput.value);
+      if (!phone) {
+        return fail('Số điện thoại không hợp lệ. Vui lòng nhập 10 số, ví dụ: 0901234567.', this.phoneInput, this.phoneWrapper);
+      }
+
+      return { name, phone };
+    }
+
+    handleAccept() {
+      const guest = this.validateInputs();
+      if (!guest) return;
 
       window.SoundFX && window.SoundFX.playBeep();
-      this.processRSVP(rawName, 'confirmed');
+      this.processRSVP(guest.name, guest.phone, 'confirmed');
     }
 
     handleDecline() {
-      const rawName = this.nameInput.value.trim();
-      if (!rawName) {
-        this.showFeedback('Vui lòng nhập họ và tên trước khi chọn từ chối để hệ thống ghi nhận.');
-        this.nameInput.focus();
-        window.SoundFX && window.SoundFX.playError();
-        return;
-      }
+      const guest = this.validateInputs();
+      if (!guest) return;
 
       window.SoundFX && window.SoundFX.playMuted();
-      this.processRSVP(rawName, 'declined');
+      this.processRSVP(guest.name, guest.phone, 'declined');
     }
 
-    async processRSVP(guestName, status) {
+    async processRSVP(guestName, guestPhone, status) {
       if (this.isSubmitting) return;
       this.isSubmitting = true;
 
@@ -361,17 +389,17 @@
       try {
         // Keep the scanning animation visible for at least 750ms
         const minDelay = new Promise(resolve => setTimeout(resolve, 750));
-        const [result] = await Promise.all([submitRsvp(guestName, status), minDelay]);
+        const [result] = await Promise.all([submitRsvp(guestName, guestPhone, status), minDelay]);
 
         if (!result.saved) {
           throw new Error(result.error || 'RSVP not saved');
         }
 
-        // Use the name as stored in the sheet (first spelling wins for duplicates)
         const displayName = result.name || guestName;
         const passId = this.generatePassId();
         this.guestData = {
           name: displayName,
+          phone: guestPhone,
           status: status,
           passId: passId,
           timestamp: new Date().toISOString()
@@ -427,9 +455,10 @@
     }
 
     resetToIdle() {
-      this.guestData = { name: '', status: null, passId: '', timestamp: null };
+      this.guestData = { name: '', phone: '', status: null, passId: '', timestamp: null };
       localStorage.removeItem(STORAGE_KEY);
       this.nameInput.value = '';
+      this.phoneInput.value = '';
       this.toggleClearBtn();
       this.clearFeedback();
       this.setState('idle');
@@ -454,6 +483,7 @@
           if (parsed && parsed.name && parsed.status) {
             this.guestData = parsed;
             this.nameInput.value = parsed.name;
+            this.phoneInput.value = parsed.phone || '';
             this.toggleClearBtn();
 
             if (parsed.status === 'confirmed') {
