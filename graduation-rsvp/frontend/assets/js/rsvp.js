@@ -21,7 +21,8 @@
 
   /**
    * Send an RSVP to the Apps Script backend.
-   * Returns { found: false } | { found: true, name, saved: true }
+   * New names are added to the sheet; existing names get their status updated.
+   * Returns { saved: true, isNew, name } | { error }
    */
   async function submitRsvp(name, status) {
     if (!API_URL) {
@@ -362,17 +363,11 @@
         const minDelay = new Promise(resolve => setTimeout(resolve, 750));
         const [result] = await Promise.all([submitRsvp(guestName, status), minDelay]);
 
-        if (!result.found) {
-          this.setState('idle');
-          this.showFeedback(`Không tìm thấy "${guestName}" trong danh sách khách mời. Vui lòng kiểm tra lại họ và tên đầy đủ.`);
-          window.SoundFX && window.SoundFX.playError();
-          return;
-        }
         if (!result.saved) {
           throw new Error(result.error || 'RSVP not saved');
         }
 
-        // Use the name exactly as written in the guest list
+        // Use the name as stored in the sheet (first spelling wins for duplicates)
         const displayName = result.name || guestName;
         const passId = this.generatePassId();
         this.guestData = {

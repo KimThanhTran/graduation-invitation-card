@@ -4,6 +4,10 @@
  * Sheet columns (row 1 = header):
  *   A: ID | B: Full Name | C: Email | D: Status | E: Responded At
  *
+ * Open registration: any name can RSVP.
+ * - New name      -> append a new row
+ * - Existing name -> update that row's status (no duplicate rows)
+ *
  * Deploy as Web app: Execute as "Me", Who has access "Anyone".
  * The sheet itself can stay private (Restricted).
  */
@@ -11,9 +15,19 @@
 // Remove accents, lowercase, collapse spaces: "Nguyễn  Văn A" == "nguyen van a"
 function normalize(s) {
   return String(s || '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd').replace(/Đ/g, 'D')
     .trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+// Trim, collapse spaces, limit length
+function cleanName(s) {
+  return String(s || '').trim().replace(/\s+/g, ' ').slice(0, 100);
+}
+
+// Prevent a name like "=HYPERLINK(...)" from being stored as a formula
+function safeCell(s) {
+  return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
 
 function findGuestRow(sheet, name) {
@@ -35,29 +49,30 @@ function json(obj) {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-    const row = findGuestRow(sheet, data.name);
+    const name = cleanName(data.name);
 
-    if (row === -1) return json({ found: false });
+    if (name.length < 2) return json({ error: 'Invalid name' });
+    if (!['Accepted', 'Declined'].includes(data.status)) return json({ error: 'Invalid status' });
 
-    const fullName = sheet.getRange(row, 2).getValue();
+    // Lock covers lookup + write so two guests submitting the same name can't create duplicates
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+      const row = findGuestRow(sheet, name);
+      const now = new Date();
 
-    if (data.action === 'lookup') {
-      return json({ found: true, name: fullName, status: sheet.getRange(row, 4).getValue() });
-    }
-
-    if (data.action === 'rsvp' && ['Accepted', 'Declined'].includes(data.status)) {
-      const lock = LockService.getScriptLock();
-      lock.waitLock(10000);
-      try {
-        sheet.getRange(row, 4, 1, 2).setValues([[data.status, new Date()]]);
-      } finally {
-        lock.releaseLock();
+      if (row === -1) {
+        const newRow = sheet.getLastRow() + 1;
+        sheet.getRange(newRow, 1, 1, 5).setValues([[newRow - 1, safeCell(name), '', data.status, now]]);
+        return json({ saved: true, isNew: true, name: name });
       }
-      return json({ found: true, name: fullName, saved: true });
-    }
 
-    return json({ error: 'Invalid request' });
+      sheet.getRange(row, 4, 1, 2).setValues([[data.status, now]]);
+      return json({ saved: true, isNew: false, name: sheet.getRange(row, 2).getValue() });
+    } finally {
+      lock.releaseLock();
+    }
   } catch (err) {
     return json({ error: String(err) });
   }

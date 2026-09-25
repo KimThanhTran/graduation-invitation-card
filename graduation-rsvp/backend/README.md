@@ -1,17 +1,19 @@
 # Backend (Google Apps Script + Google Sheet)
 
-`Code.gs` receives RSVP requests from the frontend, checks the guest name against
-the sheet, and writes the response. The sheet can stay **private** — the script
-runs with the owner's permissions.
+`Code.gs` receives RSVP requests from the frontend and writes them to the sheet.
+The sheet can stay **private** — the script runs with the owner's permissions.
 
 ## Sheet format (first tab, row 1 = header)
 
 | ID | Full Name | Email | Status | Responded At |
 |----|-----------|-------|--------|--------------|
 
-Fill in `Full Name` for every invited guest. `Status` (`Accepted` / `Declined`)
-and `Responded At` are written by the script. Name matching ignores
-accents, letter case, and extra spaces.
+Open registration: anyone with the link can RSVP.
+
+- A **new name** is appended as a new row (ID auto-increments, Email left blank).
+- An **existing name** only has its `Status` (`Accepted` / `Declined`) and
+  `Responded At` updated — no duplicate rows. Matching ignores accents,
+  letter case, and extra spaces.
 
 ## Deploy
 
