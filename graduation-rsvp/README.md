@@ -10,8 +10,6 @@ Personal digital graduation invitation card with RSVP.
 ## Structure
 
 - `frontend/` — static invitation card (HTML, CSS, Vanilla JS)
-- `backend/` — future API and guest/RSVP database
+- `backend/` — Google Apps Script that checks the guest list and stores RSVPs in a private Google Sheet
 
-## Status
-
-Project skeleton only. UI, countdown, Matrix effect, and RSVP logic are not implemented yet.
+The root `index.html` (one level up) redirects to `frontend/index.html`.

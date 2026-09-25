@@ -3,7 +3,7 @@
  * Guest Verification & RSVP Interaction Engine
  * Features:
  * - State management: idle -> checking -> confirmed | declined
- * - Realistic verification simulation structured for future API plug-in
+ * - Guest verification & RSVP storage via Google Apps Script + Google Sheet
  * - Celebratory cyber particle burst system on #celebration-canvas
  * - High-tech confirmation ticket with unique pass hash
  * - Calendar integration (.ics export / Google Calendar URL)
@@ -15,6 +15,29 @@
 
   // Constants
   const STORAGE_KEY = 'hutech_grad_rsvp_2026';
+
+  // Google Apps Script Web App URL (see backend/README.md). Paste the /exec URL here.
+  const API_URL = '';
+
+  /**
+   * Send an RSVP to the Apps Script backend.
+   * Returns { found: false } | { found: true, name, saved: true }
+   */
+  async function submitRsvp(name, status) {
+    if (!API_URL) {
+      throw new Error('API_URL is not configured in rsvp.js');
+    }
+    // No Content-Type header -> sent as text/plain, which avoids a CORS preflight to Apps Script
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'rsvp',
+        name: name,
+        status: status === 'confirmed' ? 'Accepted' : 'Declined'
+      })
+    });
+    return res.json();
+  }
 
   /* ========================================================
    * Celebration Confetti / Particle Engine
@@ -317,7 +340,10 @@
       this.processRSVP(rawName, 'declined');
     }
 
-    processRSVP(guestName, status) {
+    async processRSVP(guestName, status) {
+      if (this.isSubmitting) return;
+      this.isSubmitting = true;
+
       // Transition to checking state
       this.setState('checking guest');
       if (this.scanSubtitle) {
@@ -331,11 +357,26 @@
         setTimeout(() => { this.scanProgress.style.width = '100%'; }, 550);
       }
 
-      // Simulate network verification latency
-      setTimeout(() => {
+      try {
+        // Keep the scanning animation visible for at least 750ms
+        const minDelay = new Promise(resolve => setTimeout(resolve, 750));
+        const [result] = await Promise.all([submitRsvp(guestName, status), minDelay]);
+
+        if (!result.found) {
+          this.setState('idle');
+          this.showFeedback(`Không tìm thấy "${guestName}" trong danh sách khách mời. Vui lòng kiểm tra lại họ và tên đầy đủ.`);
+          window.SoundFX && window.SoundFX.playError();
+          return;
+        }
+        if (!result.saved) {
+          throw new Error(result.error || 'RSVP not saved');
+        }
+
+        // Use the name exactly as written in the guest list
+        const displayName = result.name || guestName;
         const passId = this.generatePassId();
         this.guestData = {
-          name: guestName,
+          name: displayName,
           status: status,
           passId: passId,
           timestamp: new Date().toISOString()
@@ -344,11 +385,18 @@
         this.saveState();
 
         if (status === 'confirmed') {
-          this.showConfirmed(guestName, passId);
+          this.showConfirmed(displayName, passId);
         } else {
-          this.showDeclined(guestName);
+          this.showDeclined(displayName);
         }
-      }, 750);
+      } catch (err) {
+        console.error('RSVP error:', err);
+        this.setState('idle');
+        this.showFeedback('Không thể kết nối tới hệ thống. Vui lòng thử lại sau ít phút.');
+        window.SoundFX && window.SoundFX.playError();
+      } finally {
+        this.isSubmitting = false;
+      }
     }
 
     generatePassId() {
