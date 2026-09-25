@@ -27,7 +27,22 @@
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 
-<body>
+<body class="intro-locked">
+  <!-- Intro gate: the guest's tap to open the card also unlocks background music -->
+  <div id="intro-gate" class="intro-gate" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+    <div class="intro-inner">
+      <div class="intro-envelope" aria-hidden="true">💌</div>
+      <p class="intro-kicker">HUTECH // KHOA CÔNG NGHỆ THÔNG TIN</p>
+      <p id="intro-title" class="intro-title">GRADUATION<span>INVITATION 2026</span></p>
+      <p class="intro-sub">Bạn nhận được một thiệp mời tốt nghiệp</p>
+      <button type="button" id="intro-open-btn" class="btn btn-cyber-primary intro-btn">
+        <span class="btn-scan-line"></span>
+        Chạm để mở thiệp
+      </button>
+      <p class="intro-hint">🎵 Thiệp có nhạc nền — bật âm lượng để nghe nhé</p>
+    </div>
+  </div>
+
   <!-- Ambient Audio Elements (Web Audio API Synthesized, no external audio file dependencies) -->
 
   <!-- Fullscreen Matrix Canvas Background -->

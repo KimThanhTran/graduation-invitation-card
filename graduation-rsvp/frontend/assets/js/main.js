@@ -135,20 +135,28 @@
 
       this.btn.addEventListener('click', () => this.toggle());
 
-      // Start on the first gesture anywhere (the button handles its own click)
-      const events = ['pointerdown', 'keydown', 'touchstart'];
-      const onFirstGesture = (e) => {
-        events.forEach(ev => document.removeEventListener(ev, onFirstGesture, true));
-        if (this.btn.contains(e.target)) return;
-        if (this.wantsMusic) this.play();
+      // Fallback: start on any gesture until playback begins (the button handles its own click).
+      // Touch only unlocks audio on release, so listen to touchend/click rather than touchstart.
+      const events = ['click', 'touchend', 'keydown'];
+      const onGesture = (e) => {
+        if (this.started || !this.wantsMusic) {
+          events.forEach(ev => document.removeEventListener(ev, onGesture, true));
+          return;
+        }
+        if (!this.btn.contains(e.target)) this.play();
       };
-      events.forEach(ev => document.addEventListener(ev, onFirstGesture, true));
+      events.forEach(ev => document.addEventListener(ev, onGesture, true));
 
       // Pause while the tab is in the background (phones keep playing otherwise)
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) this.audio.pause();
         else if (this.wantsMusic && this.started) this.play();
       });
+    }
+
+    /** Start music unless the guest turned it off on an earlier visit */
+    start() {
+      if (this.audio && this.wantsMusic && this.audio.paused) this.play();
     }
 
     play() {
@@ -240,6 +248,34 @@
   }
 
   /* ========================================================
+   * Intro Gate ("Chạm để mở thiệp")
+   * Browsers block audio until a user gesture, so the card opens
+   * behind a tap; that same tap starts the background music.
+   * ======================================================== */
+  function initIntroGate(onOpen) {
+    const gate = document.getElementById('intro-gate');
+    if (!gate) {
+      document.body.classList.remove('intro-locked');
+      onOpen();
+      return;
+    }
+
+    const openBtn = document.getElementById('intro-open-btn');
+    if (openBtn) openBtn.focus({ preventScroll: true });
+
+    const open = () => {
+      gate.removeEventListener('click', open);
+      window.BgMusic && window.BgMusic.start();
+      gate.classList.add('is-open');
+      document.body.classList.remove('intro-locked');
+      onOpen();
+      setTimeout(() => gate.remove(), 800);
+    };
+    // The whole screen is tappable; the button is there for keyboard and clarity
+    gate.addEventListener('click', open);
+  }
+
+  /* ========================================================
    * Share Button Handler
    * ======================================================== */
   function initShareButton() {
@@ -301,13 +337,15 @@
     initPhotoTilt();
     initShareButton();
 
-    // Add entrance animation class to main card
+    // Card entrance animation plays once the intro gate is opened
     const card = document.getElementById('invitation-card');
-    if (card) {
-      requestAnimationFrame(() => {
-        card.classList.add('card-entered');
-      });
-    }
+    initIntroGate(() => {
+      if (card) {
+        requestAnimationFrame(() => {
+          card.classList.add('card-entered');
+        });
+      }
+    });
 
     console.log(
       '%c 🎓 GRADUATION INVITATION // HUTECH IT 2026 %c System initialized.',

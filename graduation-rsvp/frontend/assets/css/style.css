@@ -1700,6 +1700,108 @@ body {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Intro Gate ("Chạm để mở thiệp")
+   -------------------------------------------------------------------------- */
+body.intro-locked {
+  overflow: hidden;
+}
+
+.intro-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: radial-gradient(ellipse at 50% 0%, #2a0b1d 0%, #060405 60%, #000 100%);
+  cursor: pointer;
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
+
+.intro-gate.is-open {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-inner {
+  max-width: 420px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.intro-gate.is-open .intro-inner {
+  transform: scale(1.08);
+}
+
+.intro-envelope {
+  font-size: 4.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 22px rgba(255, 46, 147, 0.55));
+  animation: introFloat 2.6s ease-in-out infinite;
+}
+
+@keyframes introFloat {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-10px) rotate(4deg); }
+}
+
+.intro-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--neon-cyan);
+}
+
+.intro-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.9rem, 8vw, 2.6rem);
+  line-height: 1.1;
+  color: var(--text-pure);
+  text-shadow: 0 0 24px rgba(255, 46, 147, 0.5);
+}
+
+.intro-title span {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.55em;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--text-highlight));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.intro-sub {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+}
+
+.btn-cyber-primary.intro-btn {
+  flex: 0 0 auto;
+  margin-top: 0.6rem;
+  padding: 0.95rem 2.2rem;
+  animation: introPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes introPulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(255, 46, 147, 0.4), 0 0 0 0 rgba(255, 46, 147, 0.45); }
+  50% { box-shadow: 0 4px 20px rgba(255, 46, 147, 0.4), 0 0 0 14px rgba(255, 46, 147, 0); }
+}
+
+.intro-hint {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
