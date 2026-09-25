@@ -5,8 +5,8 @@ The sheet can stay **private** — the script runs with the owner's permissions.
 
 ## Sheet format (first tab, row 1 = header)
 
-| ID | Full Name | Status | Responded At |
-|----|-----------|--------|--------------|
+| ID | Full Name | Status | Responded At | Wish | Wished At |
+|----|-----------|--------|--------------|------|-----------|
 
 Open registration: anyone with the link can RSVP.
 
@@ -16,6 +16,9 @@ Open registration: anyone with the link can RSVP.
   letter case, and extra spaces.
 
 `Responded At` is Vietnam time (dd/MM/yyyy HH:mm:ss).
+
+After responding (accept or decline), a guest can send a wish. It is written to
+`Wish` / `Wished At` on the guest's row; sending again overwrites the old wish.
 
 ## Deploy
 

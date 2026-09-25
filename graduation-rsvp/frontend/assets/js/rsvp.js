@@ -7,6 +7,7 @@
  * - Celebratory cyber particle burst system on #celebration-canvas
  * - High-tech confirmation ticket with unique pass hash
  * - Calendar integration (.ics export / Google Calendar URL)
+ * - Downloadable ticket image (canvas render) & guest wishes
  * - Local storage persistence for seamless guest session
  */
 
@@ -40,9 +41,21 @@
     return res.json();
   }
 
+  /** Save a guest wish on the guest's sheet row. Returns { saved: true } | { error } */
+  async function submitWish(name, message) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'wish', name: name, message: message })
+    });
+    return res.json();
+  }
+
   /* ========================================================
    * Celebration Confetti / Particle Engine
    * ======================================================== */
+  const BURST_EMOJIS = ['🎓', '🌸', '💖', '✨', '🎉'];
+  const PETAL_EMOJIS = ['🌸', '💮', '💗', '🌷'];
+
   class CelebrationFX {
     constructor(canvasId) {
       this.canvas = document.getElementById(canvasId);
@@ -90,23 +103,60 @@
         const speed = 4 + Math.random() * 9;
         const color = colors[Math.floor(Math.random() * colors.length)];
         const isShapeRect = Math.random() > 0.5;
+        const emoji = Math.random() < 0.3 ? BURST_EMOJIS[Math.floor(Math.random() * BURST_EMOJIS.length)] : null;
 
         this.particles.push({
           x: originX + (Math.random() - 0.5) * 80,
           y: originY + (Math.random() - 0.5) * 40,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed - 3.5, // Initial upward kick
-          size: 3 + Math.random() * 5,
+          size: emoji ? 18 + Math.random() * 14 : 3 + Math.random() * 5,
           color: color,
           alpha: 1,
-          decay: 0.008 + Math.random() * 0.014,
+          decay: emoji ? 0.006 + Math.random() * 0.006 : 0.008 + Math.random() * 0.014,
           rotation: Math.random() * 360,
-          rotSpeed: (Math.random() - 0.5) * 12,
+          rotSpeed: (Math.random() - 0.5) * (emoji ? 6 : 12),
           isRect: isShapeRect,
-          gravity: 0.18
+          emoji: emoji,
+          gravity: 0.18,
+          sway: 0,
+          phase: 0
         });
       }
 
+      this.start();
+    }
+
+    /** Gentle falling petals — used for the decline response */
+    petals() {
+      this.resize();
+      this.particles = [];
+      const count = window.innerWidth < 640 ? 22 : 36;
+
+      for (let i = 0; i < count; i++) {
+        this.particles.push({
+          x: Math.random() * this.width,
+          y: -30 - Math.random() * this.height * 0.5,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: 1.6 + Math.random() * 1.6,
+          size: 16 + Math.random() * 12,
+          color: '#ff85c0',
+          alpha: 1,
+          decay: 0.0028 + Math.random() * 0.0018,
+          rotation: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 3,
+          isRect: false,
+          emoji: PETAL_EMOJIS[Math.floor(Math.random() * PETAL_EMOJIS.length)],
+          gravity: 0,
+          sway: 0.6 + Math.random() * 0.8,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      this.start();
+    }
+
+    start() {
       if (!this.isRunning) {
         this.isRunning = true;
         this.animate();
@@ -125,7 +175,8 @@
         if (p.alpha <= 0) continue;
 
         aliveCount++;
-        p.x += p.vx;
+        p.phase += 0.04;
+        p.x += p.vx + Math.sin(p.phase) * p.sway;
         p.y += p.vy;
         p.vy += p.gravity;
         p.vx *= 0.98;
@@ -136,6 +187,16 @@
         this.ctx.globalAlpha = Math.max(0, p.alpha);
         this.ctx.translate(p.x, p.y);
         this.ctx.rotate((p.rotation * Math.PI) / 180);
+
+        if (p.emoji) {
+          this.ctx.font = `${p.size}px serif`;
+          this.ctx.textAlign = 'center';
+          this.ctx.textBaseline = 'middle';
+          this.ctx.fillText(p.emoji, 0, 0);
+          this.ctx.restore();
+          continue;
+        }
+
         this.ctx.fillStyle = p.color;
         this.ctx.shadowColor = p.color;
         this.ctx.shadowBlur = 6;
@@ -172,6 +233,240 @@
   }
 
   /* ========================================================
+   * Ticket Image Renderer (1600 x 800 PNG, landscape pass with tear-off stub)
+   * ======================================================== */
+  /** Ticket outline: rounded rect with half-circle notches where the stub tears off */
+  function ticketPath(ctx, x, y, w, h, r, sx, n) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(sx - n, y);
+    ctx.arc(sx, y, n, Math.PI, 0, true);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.lineTo(sx + n, y + h);
+    ctx.arc(sx, y + h, n, 0, Math.PI, true);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  /** Split text into lines that fit maxWidth with the current ctx.font */
+  function wrapLines(ctx, text, maxWidth) {
+    const lines = [];
+    let line = '';
+    text.split(' ').forEach(word => {
+      const test = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(test).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  /** Cut text with an ellipsis so it fits maxWidth with the current ctx.font */
+  function fitText(ctx, text, maxWidth) {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(`${t}…`).width > maxWidth) t = t.slice(0, -1);
+    return `${t.trimEnd()}…`;
+  }
+
+  async function renderTicketImage(guestName, passId) {
+    const W = 1600;
+    const H = 800;
+    const PINK = '#ff2e93';
+    const SOFT_PINK = '#ff85c0';
+    const MUTED = '#b8a9b1';
+
+    // Make sure web fonts are ready before drawing text on canvas
+    if (document.fonts && document.fonts.load) {
+      await Promise.all([
+        document.fonts.load('900 60px Orbitron'),
+        document.fonts.load('700 40px "Space Grotesk"'),
+        document.fonts.load('500 30px "Plus Jakarta Sans"'),
+        document.fonts.load('600 26px "JetBrains Mono"')
+      ]).catch(() => {});
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    const bg = ctx.createRadialGradient(W * 0.35, 0, 50, W / 2, H * 0.4, W * 0.8);
+    bg.addColorStop(0, '#2a0b1d');
+    bg.addColorStop(0.55, '#060405');
+    bg.addColorStop(1, '#000000');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Card shell with pink → gold rim; the stub starts at sx
+    const cx = 50, cy = 50, cw = W - 100, ch = H - 100;
+    const stubW = 400;
+    const sx = cx + cw - stubW;
+    const notch = 26;
+    ticketPath(ctx, cx, cy, cw, ch, 36, sx, notch);
+    ctx.fillStyle = 'rgba(20, 10, 16, 0.92)';
+    ctx.fill();
+    const border = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
+    border.addColorStop(0, PINK);
+    border.addColorStop(0.5, '#e11d74');
+    border.addColorStop(1, '#facc15');
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = border;
+    ctx.shadowColor = 'rgba(255, 46, 147, 0.6)';
+    ctx.shadowBlur = 30;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const dashed = (xa, ya, xb, yb, alpha = 0.4) => {
+      ctx.save();
+      ctx.setLineDash([12, 10]);
+      ctx.strokeStyle = `rgba(255, 46, 147, ${alpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(xa, ya);
+      ctx.lineTo(xb, yb);
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    // Perforation between the main pass and the stub
+    dashed(sx, cy + notch + 10, sx, cy + ch - notch - 10, 0.6);
+
+    /* ---------- Main section ---------- */
+    const x0 = cx + 60;
+    const x1 = sx - 50;
+    const mainW = x1 - x0;
+
+    // Header row
+    ctx.font = '600 24px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#34d399';
+    ctx.fillText('STATUS 200', x0, cy + 65);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = PINK;
+    ctx.fillText('OFFICIAL PASS // CONFIRMED', x1, cy + 65);
+    ctx.textAlign = 'left';
+    dashed(x0, cy + 95, x1, cy + 95);
+
+    // Hero title: cap on the left, title stacked beside it
+    ctx.font = '104px serif';
+    ctx.fillText('🎓', x0 - 6, cy + 255);
+
+    const xT = x0 + 150;
+    ctx.font = '900 68px Orbitron, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(255, 46, 147, 0.5)';
+    ctx.shadowBlur = 24;
+    ctx.fillText('GRADUATION', xT, cy + 195);
+    const titleGrad = ctx.createLinearGradient(xT, 0, xT + 560, 0);
+    titleGrad.addColorStop(0, PINK);
+    titleGrad.addColorStop(1, SOFT_PINK);
+    ctx.fillStyle = titleGrad;
+    ctx.font = '900 54px Orbitron, sans-serif';
+    ctx.fillText('CLASS OF 2026', xT, cy + 262);
+    ctx.shadowBlur = 0;
+
+    ctx.font = '700 30px "Space Grotesk", sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('HUTECH — Khoa Công nghệ thông tin', x0, cy + 325);
+
+    // Guest name (drops to two smaller lines for long names)
+    ctx.font = '500 26px "Plus Jakarta Sans", sans-serif';
+    ctx.fillStyle = MUTED;
+    ctx.fillText('Trân trọng chào đón', x0, cy + 385);
+
+    let nameSize = 58;
+    ctx.font = `700 ${nameSize}px "Space Grotesk", sans-serif`;
+    let nameLines = [guestName];
+    if (ctx.measureText(guestName).width > mainW) {
+      nameSize = 42;
+      ctx.font = `700 ${nameSize}px "Space Grotesk", sans-serif`;
+      nameLines = wrapLines(ctx, guestName, mainW);
+      if (nameLines.length > 2) {
+        nameLines = [nameLines[0], fitText(ctx, nameLines.slice(1).join(' '), mainW)];
+      }
+    }
+    ctx.fillStyle = PINK;
+    ctx.shadowColor = 'rgba(255, 46, 147, 0.55)';
+    ctx.shadowBlur = 20;
+    nameLines.forEach((line, i) => ctx.fillText(line, x0, cy + 448 + i * nameSize * 1.12));
+    ctx.shadowBlur = 0;
+
+    // Event details
+    const detailsTop = cy + 525;
+    dashed(x0, detailsTop, x1, detailsTop);
+
+    const details = [
+      ['DATE', '01/11/2026'],
+      ['TIME', '08:00 AM'],
+      ['GATE OPEN', '07:30 AM']
+    ];
+    details.forEach(([label, value], i) => {
+      const x = x0 + i * 260;
+      ctx.font = '600 22px "JetBrains Mono", monospace';
+      ctx.fillStyle = MUTED;
+      ctx.fillText(label, x, detailsTop + 48);
+      ctx.font = '700 36px "Space Grotesk", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(value, x, detailsTop + 92);
+    });
+
+    ctx.font = '500 25px "Plus Jakarta Sans", sans-serif';
+    ctx.fillStyle = SOFT_PINK;
+    ctx.fillText('📍 Thu Duc Campus — HUTECH Khu Công nghệ cao TP.HCM', x0, detailsTop + 142);
+
+    /* ---------- Stub ---------- */
+    const s0 = sx + 45;
+    const s1 = cx + cw - 45;
+    const sMid = (s0 + s1) / 2;
+    const stubInner = s1 - s0;
+
+    ctx.textAlign = 'center';
+    ctx.font = '700 26px "JetBrains Mono", monospace';
+    ctx.fillStyle = PINK;
+    ctx.fillText('ADMIT ONE', sMid, cy + 65);
+    dashed(s0, cy + 95, s1, cy + 95);
+
+    const stubField = (label, value, y, size) => {
+      ctx.font = '600 20px "JetBrains Mono", monospace';
+      ctx.fillStyle = MUTED;
+      ctx.fillText(label, sMid, y);
+      ctx.font = `700 ${size}px "Space Grotesk", sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(fitText(ctx, value, stubInner), sMid, y + size + 8);
+    };
+    stubField('GUEST', guestName, cy + 155, 32);
+    stubField('ZONE', 'GUEST AREA — HALL A', cy + 255, 26);
+    stubField('DATE', '01/11/2026 · 08:00 AM', cy + 350, 26);
+
+    // Barcode seeded from the pass id, so the same pass always draws the same bars
+    const barW = stubInner - 20, barH = 120;
+    const barX = sMid - barW / 2;
+    const barY = cy + ch - 225;
+    let seed = 7;
+    for (const c of passId) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+    ctx.fillStyle = PINK;
+    for (let bx = barX; bx < barX + barW;) {
+      seed = (seed * 1103515245 + 12345) >>> 0;
+      const w = 2 + (seed % 5);
+      ctx.fillRect(bx, barY, Math.min(w, barX + barW - bx), barH);
+      bx += w + 2 + ((seed >>> 8) % 4);
+    }
+    ctx.font = '600 22px "JetBrains Mono", monospace';
+    ctx.fillStyle = MUTED;
+    ctx.fillText(fitText(ctx, passId, stubInner), sMid, barY + barH + 42);
+
+    return canvas;
+  }
+
+  /* ========================================================
    * RSVP Controller Class
    * ======================================================== */
   class RSVPController {
@@ -200,6 +495,8 @@
       this.btnAddCalendar = document.getElementById('btn-add-calendar');
       this.btnEditRsvp = document.getElementById('btn-edit-rsvp');
       this.btnReconsider = document.getElementById('btn-reconsider');
+      this.btnDownloadTicket = document.getElementById('btn-download-ticket');
+      this.wishBoxes = Array.from(document.querySelectorAll('[data-wish-box]'));
 
       // Particle FX instance
       this.celebrationFX = new CelebrationFX('celebration-canvas');
@@ -210,7 +507,8 @@
         name: '',
         status: null,
         passId: '',
-        timestamp: null
+        timestamp: null,
+        wish: ''
       };
 
       this.init();
@@ -219,6 +517,7 @@
     init() {
       this.loadSavedState();
       this.bindEvents();
+      this.bindWishBoxes();
     }
 
     bindEvents() {
@@ -257,6 +556,79 @@
       // Add to Calendar
       if (this.btnAddCalendar) {
         this.btnAddCalendar.addEventListener('click', () => this.exportCalendarEvent());
+      }
+
+      // Download ticket as image
+      if (this.btnDownloadTicket) {
+        this.btnDownloadTicket.addEventListener('click', () => this.downloadTicket());
+      }
+    }
+
+    bindWishBoxes() {
+      this.wishBoxes.forEach(box => {
+        const input = box.querySelector('.wish-input');
+        const counter = box.querySelector('.wish-counter');
+
+        input.addEventListener('input', () => {
+          counter.textContent = `${input.value.length}/500`;
+          this.setWishFeedback(box, '');
+        });
+        box.querySelector('.wish-send').addEventListener('click', () => this.sendWish(box));
+      });
+      this.renderWishBoxes();
+    }
+
+    setWishFeedback(box, message, isError = true) {
+      const el = box.querySelector('.wish-feedback');
+      el.textContent = message;
+      el.className = `wish-feedback ${message ? (isError ? 'feedback-error' : 'feedback-success') : ''}`;
+    }
+
+    /** Show the form, or the "sent" state if this guest already sent a wish */
+    renderWishBoxes() {
+      const wish = this.guestData.wish || '';
+      this.wishBoxes.forEach(box => {
+        box.classList.toggle('is-sent', !!wish);
+        box.querySelector('.wish-sent-text').textContent = wish;
+        if (!wish) {
+          box.querySelector('.wish-input').value = '';
+          box.querySelector('.wish-counter').textContent = '0/500';
+          this.setWishFeedback(box, '');
+        }
+      });
+    }
+
+    async sendWish(box) {
+      const input = box.querySelector('.wish-input');
+      const sendBtn = box.querySelector('.wish-send');
+      const message = input.value.trim();
+
+      if (!message) {
+        this.setWishFeedback(box, 'Bạn hãy viết vài lời chúc trước khi gửi nhé.');
+        input.focus();
+        window.SoundFX && window.SoundFX.playError();
+        return;
+      }
+      if (sendBtn.disabled || !this.guestData.name) return;
+
+      sendBtn.disabled = true;
+      this.setWishFeedback(box, 'Đang gửi lời chúc...', false);
+
+      try {
+        const result = await submitWish(this.guestData.name, message);
+        if (!result.saved) throw new Error(result.error || 'Wish not saved');
+
+        this.guestData.wish = message;
+        this.saveState();
+        this.renderWishBoxes();
+        window.SoundFX && window.SoundFX.playSuccess();
+        window.showCyberToast('💌 Đã gửi lời chúc, cảm ơn bạn!');
+      } catch (err) {
+        console.error('Wish error:', err);
+        this.setWishFeedback(box, 'Chưa gửi được lời chúc. Vui lòng thử lại sau ít phút.');
+        window.SoundFX && window.SoundFX.playError();
+      } finally {
+        sendBtn.disabled = false;
       }
     }
 
@@ -374,10 +746,12 @@
           name: displayName,
           status: status,
           passId: passId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          wish: ''
         };
 
         this.saveState();
+        this.renderWishBoxes();
 
         if (status === 'confirmed') {
           this.showConfirmed(displayName, passId);
@@ -423,12 +797,16 @@
       this.setState('declined');
       window.SoundFX && window.SoundFX.playMuted();
 
-      window.showCyberToast(`Đã ghi nhận phản hồi từ: ${guestName}`);
+      // Soft falling petals instead of a celebration burst
+      this.celebrationFX.petals();
+
+      window.showCyberToast(`💐 Đã ghi nhận phản hồi từ: ${guestName}`);
     }
 
     resetToIdle() {
-      this.guestData = { name: '', status: null, passId: '', timestamp: null };
+      this.guestData = { name: '', status: null, passId: '', timestamp: null, wish: '' };
       localStorage.removeItem(STORAGE_KEY);
+      this.renderWishBoxes();
       this.nameInput.value = '';
       this.toggleClearBtn();
       this.clearFeedback();
@@ -472,6 +850,48 @@
       }
 
       this.setState('idle');
+    }
+
+    /** Render the confirmed pass onto a canvas and save it as a PNG */
+    async downloadTicket() {
+      if (this.isRenderingTicket) return;
+      this.isRenderingTicket = true;
+
+      try {
+        const name = this.guestData.name || this.confirmedNameEl.textContent;
+        const passId = this.guestData.passId || this.ticketPassIdEl.textContent;
+        const canvas = await renderTicketImage(name, passId);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const fileName = `ve-moi-tot-nghiep-${passId}.png`;
+
+        // On phones the share sheet lets guests save straight to Photos
+        const file = new File([blob], fileName, { type: 'image/png' });
+        const isTouch = window.matchMedia('(pointer: coarse)').matches;
+        if (isTouch && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: 'Vé mời Lễ Tốt Nghiệp' });
+            return;
+          } catch (err) {
+            if (err.name === 'AbortError') return;
+            // Otherwise fall through to a normal download
+          }
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        window.showCyberToast('🖼️ Đã tải vé về máy!');
+      } catch (err) {
+        console.error('Ticket export error:', err);
+        window.showCyberToast('Không tạo được ảnh vé, vui lòng thử lại.');
+      } finally {
+        this.isRenderingTicket = false;
+      }
     }
 
     exportCalendarEvent() {

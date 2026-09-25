@@ -342,8 +342,33 @@
               </div>
             </div>
 
+            <!-- Guest Wish Box -->
+            <div class="wish-box" data-wish-box>
+              <div class="wish-form">
+                <label for="wish-input-confirmed" class="wish-label">💌 Gửi lời chúc cho tân cử nhân</label>
+                <textarea id="wish-input-confirmed" class="wish-input" rows="3" maxlength="500"
+                  placeholder="Viết vài lời chúc mừng nhé..."></textarea>
+                <div class="wish-footer">
+                  <span class="wish-counter">0/500</span>
+                  <button type="button" class="btn btn-cyber-primary btn-sm wish-send">
+                    <span class="btn-scan-line"></span>
+                    <span>💌</span> Gửi lời chúc
+                  </button>
+                </div>
+                <p class="wish-feedback" aria-live="polite"></p>
+              </div>
+              <div class="wish-sent" aria-live="polite">
+                <div class="wish-sent-icon">💖</div>
+                <p class="wish-sent-title">Cảm ơn bạn đã gửi lời chúc!</p>
+                <blockquote class="wish-sent-text"></blockquote>
+              </div>
+            </div>
+
             <!-- Follow-up Actions -->
             <div class="confirmed-actions">
+              <button type="button" id="btn-download-ticket" class="btn btn-cyber-secondary btn-sm">
+                <span>🖼️</span> Tải vé về máy
+              </button>
               <button type="button" id="btn-add-calendar" class="btn btn-cyber-secondary btn-sm">
                 <span>📅</span> Thêm vào lịch (Google / Apple Calendar)
               </button>
@@ -356,16 +381,38 @@
           <!-- STATE 4: DECLINE CONFIRMED STATE -->
           <div class="rsvp-view rsvp-declined-view" id="rsvp-declined" aria-live="polite">
             <div class="decline-box">
-              <div class="decline-icon-badge">ℹ️</div>
-              <span class="status-code status-code-muted">SYS // RESPONSE LOGGED</span>
-              <h3 class="decline-heading">INVITATION RESPONSE RECEIVED</h3>
-              <p class="decline-guest">Kính gửi: <strong id="declined-guest-name" class="highlight-name">Khách
-                  Mời</strong></p>
-              <p class="decline-message">Thank you for letting me know.</p>
+              <div class="decline-icon-badge">💐</div>
+              <span class="status-code status-code-muted">RESPONSE RECEIVED</span>
+              <h3 class="decline-heading">SEE YOU NEXT TIME</h3>
+              <p class="decline-guest">Gửi <strong id="declined-guest-name" class="highlight-name">Khách
+                  Mời</strong> thân mến,</p>
+              <p class="decline-message">Tiếc quá, hôm đó mình không gặp được bạn rồi 🥺</p>
               <p class="decline-sub">
-                Cảm ơn bạn đã phản hồi! Dù bạn không thể trực tiếp tham dự, sự quan tâm và lời chúc của bạn luôn là niềm
-                vinh hạnh to lớn cho tôi trên chặng đường mới.
+                Cảm ơn bạn đã dành thời gian báo cho mình biết. Dù không có mặt, bạn vẫn luôn là một phần
+                trong hành trình này của mình. Nếu được, hãy để lại vài lời chúc bên dưới nhé — mình sẽ đọc hết đó! 💗
               </p>
+
+            <!-- Guest Wish Box -->
+            <div class="wish-box" data-wish-box>
+              <div class="wish-form">
+                <label for="wish-input-declined" class="wish-label">💌 Gửi lời chúc cho tân cử nhân</label>
+                <textarea id="wish-input-declined" class="wish-input" rows="3" maxlength="500"
+                  placeholder="Dù không đến được, bạn vẫn có thể gửi lời chúc ở đây..."></textarea>
+                <div class="wish-footer">
+                  <span class="wish-counter">0/500</span>
+                  <button type="button" class="btn btn-cyber-primary btn-sm wish-send">
+                    <span class="btn-scan-line"></span>
+                    <span>💌</span> Gửi lời chúc
+                  </button>
+                </div>
+                <p class="wish-feedback" aria-live="polite"></p>
+              </div>
+              <div class="wish-sent" aria-live="polite">
+                <div class="wish-sent-icon">💖</div>
+                <p class="wish-sent-title">Cảm ơn bạn đã gửi lời chúc!</p>
+                <blockquote class="wish-sent-text"></blockquote>
+              </div>
+            </div>
 
               <div class="decline-actions">
                 <button type="button" id="btn-reconsider" class="btn btn-cyber-secondary btn-sm">

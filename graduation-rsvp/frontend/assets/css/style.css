@@ -1369,6 +1369,124 @@ body {
   justify-content: center;
 }
 
+/* Guest Wish Box (shown after accept & decline) */
+.wish-box {
+  text-align: left;
+  background: var(--bg-glass-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.wish-label {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-pure);
+  margin-bottom: 0.6rem;
+}
+
+.wish-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 84px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(255, 46, 147, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.85rem;
+  color: var(--text-pure);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.wish-input::placeholder {
+  color: var(--text-muted);
+}
+
+.wish-input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 16px rgba(255, 46, 147, 0.3);
+}
+
+.wish-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.wish-counter {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.btn-cyber-primary.wish-send {
+  flex: 0 0 auto;
+}
+
+.wish-send:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+.wish-feedback {
+  font-size: 0.82rem;
+  margin-top: 0.45rem;
+  min-height: 1.1rem;
+}
+
+.wish-sent {
+  display: none;
+  text-align: center;
+}
+
+.wish-box.is-sent .wish-form {
+  display: none;
+}
+
+.wish-box.is-sent .wish-sent {
+  display: block;
+  animation: wishPop 0.45s var(--transition-bounce);
+}
+
+@keyframes wishPop {
+  0% { opacity: 0; transform: scale(0.94); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.wish-sent-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.wish-sent-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-pure);
+  margin-bottom: 0.5rem;
+}
+
+.wish-sent-text {
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-left: 3px solid var(--neon-cyan);
+  padding: 0.25rem 0 0.25rem 0.85rem;
+  text-align: left;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
 /* --------------------------------------------------------------------------
    10. Card Footer
    -------------------------------------------------------------------------- */
@@ -1484,6 +1602,21 @@ body {
   .rsvp-actions {
     flex-direction: column;
     width: 100%;
+    gap: 0.75rem;
+  }
+
+  /* In a column, flex-basis would become the button height — size to content instead */
+  .rsvp-actions .btn {
+    flex: 0 0 auto;
+  }
+
+  .wish-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wish-counter {
+    text-align: right;
   }
 
   .btn {
