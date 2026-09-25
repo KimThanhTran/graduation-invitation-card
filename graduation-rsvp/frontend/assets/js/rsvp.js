@@ -20,34 +20,50 @@
   // Google Apps Script Web App URL (see backend/README.md). Paste the /exec URL here.
   const API_URL = 'https://script.google.com/macros/s/AKfycbxWwwsPYZffKC5PvjCm1gssKdZofaiHLcbv91wf_fkfFwWWKvpTW4SciR1YnVUWg7VJ/exec';
 
+  const MAX_ATTEMPTS = 3;
+
   /**
-   * Send an RSVP to the Apps Script backend.
-   * New names are added to the sheet; existing names get their status updated.
-   * Returns { saved: true, isNew, name } | { error }
+   * POST to the Apps Script backend, retrying transient failures.
+   * Apps Script answers via a redirect to script.googleusercontent.com, and that
+   * second hop sometimes returns a 404 page even though doPost already ran.
+   * The backend is safe to repeat (duplicate names and repeated wishes are skipped).
+   * Returns the parsed JSON plus `retried: true` if an earlier attempt failed.
    */
-  async function submitRsvp(name, status) {
+  async function postToApi(payload) {
     if (!API_URL) {
       throw new Error('API_URL is not configured in rsvp.js');
     }
-    // No Content-Type header -> sent as text/plain, which avoids a CORS preflight to Apps Script
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'rsvp',
-        name: name,
-        status: status === 'confirmed' ? 'Accepted' : 'Declined'
-      })
+    let lastError;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        // No Content-Type header -> sent as text/plain, which avoids a CORS preflight to Apps Script
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return attempt > 1 ? { ...data, retried: true } : data;
+      } catch (err) {
+        lastError = err;
+        if (attempt < MAX_ATTEMPTS) await new Promise(r => setTimeout(r, 600 * attempt));
+      }
+    }
+    throw lastError;
+  }
+
+  /**
+   * Send an RSVP. New names are added to the sheet; existing names are kept as-is.
+   * Returns { saved: true, isNew, name } | { error }
+   */
+  function submitRsvp(name, status) {
+    return postToApi({
+      action: 'rsvp',
+      name: name,
+      status: status === 'confirmed' ? 'Accepted' : 'Declined'
     });
-    return res.json();
   }
 
   /** Save a guest wish on the guest's sheet row. Returns { saved: true } | { error } */
-  async function submitWish(name, message) {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'wish', name: name, message: message })
-    });
-    return res.json();
+  function submitWish(name, message) {
+    return postToApi({ action: 'wish', name: name, message: message });
   }
 
   /* ========================================================
@@ -759,8 +775,9 @@
           this.showDeclined(displayName);
         }
 
-        // Name already on the list: the sheet kept the first response, the guest can still add a wish
-        if (result.isNew === false) {
+        // Name already on the list: the sheet kept the first response, the guest can still add a wish.
+        // After a retry, "already there" may just be this guest's own first attempt, so stay quiet.
+        if (result.isNew === false && !result.retried) {
           window.showCyberToast(`👋 ${displayName} đã đăng ký trước đó — bạn vẫn có thể gửi thêm lời chúc nhé!`, 4500);
         }
       } catch (err) {

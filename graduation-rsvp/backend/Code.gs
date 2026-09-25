@@ -111,6 +111,8 @@ function saveWish(name, message) {
 
     // Append to any earlier wish on this row instead of overwriting it
     const previous = String(sheet.getRange(row, 5).getValue() || '');
+    // Same wish already at the end = a retried request whose first attempt was saved
+    if (previous === message || previous.endsWith('\n\n' + message)) return json({ saved: true });
     const wish = previous ? (previous + '\n\n' + message).slice(0, MAX_WISHES_LENGTH) : message;
     sheet.getRange(row, 5, 1, 2).setValues([[safeCell(wish), nowText()]]);
     return json({ saved: true });
