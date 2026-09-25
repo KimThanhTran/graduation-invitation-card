@@ -5,15 +5,15 @@ The sheet can stay **private** — the script runs with the owner's permissions.
 
 ## Sheet format (first tab, row 1 = header)
 
-| ID | Full Name | Phone | Status | Responded At |
-|----|-----------|-------|--------|--------------|
+| ID | Full Name | Status | Responded At |
+|----|-----------|--------|--------------|
 
-Open registration: anyone with the link can RSVP with their name and phone number.
-The phone number (10 digits, `+84` accepted) identifies a guest:
+Open registration: anyone with the link can RSVP.
 
-- A **new phone number** is appended as a new row (ID auto-increments).
-- An **existing phone number** has its name, `Status` (`Accepted` / `Declined`) and
-  `Responded At` updated — no duplicate rows.
+- A **new name** is appended as a new row (ID auto-increments).
+- An **existing name** only has its `Status` (`Accepted` / `Declined`) and
+  `Responded At` updated — no duplicate rows. Matching ignores accents,
+  letter case, and extra spaces.
 
 `Responded At` is Vietnam time (dd/MM/yyyy HH:mm:ss).
 
