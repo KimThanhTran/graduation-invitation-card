@@ -758,6 +758,11 @@
         } else {
           this.showDeclined(displayName);
         }
+
+        // Name already on the list: the sheet kept the first response, the guest can still add a wish
+        if (result.isNew === false) {
+          window.showCyberToast(`👋 ${displayName} đã đăng ký trước đó — bạn vẫn có thể gửi thêm lời chúc nhé!`, 4500);
+        }
       } catch (err) {
         console.error('RSVP error:', err);
         this.setState('idle');

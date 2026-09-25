@@ -11,14 +11,16 @@ The sheet can stay **private** — the script runs with the owner's permissions.
 Open registration: anyone with the link can RSVP.
 
 - A **new name** is appended as a new row (ID auto-increments).
-- An **existing name** only has its `Status` (`Accepted` / `Declined`) and
-  `Responded At` updated — no duplicate rows. Matching ignores accents,
-  letter case, and extra spaces.
+- An **existing name** is skipped: nothing is written, the first response is
+  kept, and no duplicate row is created. The guest still continues to the
+  wish box. Matching ignores accents, letter case, and extra spaces.
 
 `Responded At` is Vietnam time (dd/MM/yyyy HH:mm:ss).
 
 After responding (accept or decline), a guest can send a wish. It is written to
-`Wish` / `Wished At` on the guest's row; sending again overwrites the old wish.
+`Wish` / `Wished At` on the guest's row; later wishes for the same name are
+appended below the earlier ones (blank line between), and `Wished At` shows the
+latest.
 
 ## Deploy
 

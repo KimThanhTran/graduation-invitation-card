@@ -6,11 +6,11 @@
  *
  * Open registration: any name can RSVP.
  * - New name      -> append a new row
- * - Existing name -> update that row's status (no duplicate rows)
+ * - Existing name -> nothing is written (first response is kept), but the guest can still send wishes
  *
  * Actions (POST body JSON):
  * - { action: 'rsvp', name, status: 'Accepted' | 'Declined' }
- * - { action: 'wish', name, message }  -> saves a wish on an existing guest's row
+ * - { action: 'wish', name, message }  -> appends a wish to an existing guest's row
  *
  * Deploy as Web app: Execute as "Me", Who has access "Anyone".
  * The sheet itself can stay private (Restricted).
@@ -44,6 +44,9 @@ function findGuestRow(sheet, name) {
   }
   return -1;
 }
+
+// Cap for all wishes stacked on one row (a Sheets cell holds up to 50,000 chars)
+const MAX_WISHES_LENGTH = 5000;
 
 // Trim and limit wish length (keeps line breaks)
 function cleanWish(s) {
@@ -85,7 +88,7 @@ function doPost(e) {
         return json({ saved: true, isNew: true, name: name });
       }
 
-      sheet.getRange(row, 3, 1, 2).setValues([[data.status, now]]);
+      // Duplicate name: keep the first response untouched, but let the guest continue (e.g. to send a wish)
       return json({ saved: true, isNew: false, name: sheet.getRange(row, 2).getValue() });
     } finally {
       lock.releaseLock();
@@ -106,7 +109,10 @@ function saveWish(name, message) {
     const row = findGuestRow(sheet, name);
     if (row === -1) return json({ error: 'Guest not found' });
 
-    sheet.getRange(row, 5, 1, 2).setValues([[safeCell(message), nowText()]]);
+    // Append to any earlier wish on this row instead of overwriting it
+    const previous = String(sheet.getRange(row, 5).getValue() || '');
+    const wish = previous ? (previous + '\n\n' + message).slice(0, MAX_WISHES_LENGTH) : message;
+    sheet.getRange(row, 5, 1, 2).setValues([[safeCell(wish), nowText()]]);
     return json({ saved: true });
   } finally {
     lock.releaseLock();
