@@ -66,6 +66,11 @@
     return postToApi({ action: 'wish', name: name, message: message });
   }
 
+  /** Store the ticket image on the host's Drive (first ticket per guest wins). Returns { saved, existed, passId } | { error } */
+  function submitTicket(name, passId, image) {
+    return postToApi({ action: 'ticket', name: name, passId: passId, image: image });
+  }
+
   /* ========================================================
    * Celebration Confetti / Particle Engine
    * ======================================================== */
@@ -755,15 +760,17 @@
           throw new Error(result.error || 'RSVP not saved');
         }
 
-        // Use the name as stored in the sheet (first spelling wins for duplicates)
+        // Use the name as stored in the sheet (first spelling wins for duplicates),
+        // and the pass already on Drive if this guest has one
         const displayName = result.name || guestName;
-        const passId = this.generatePassId();
+        const passId = result.passId || this.generatePassId();
         this.guestData = {
           name: displayName,
           status: status,
           passId: passId,
           timestamp: new Date().toISOString(),
-          wish: ''
+          wish: '',
+          ticketSaved: !!result.passId
         };
 
         this.saveState();
@@ -771,6 +778,7 @@
 
         if (status === 'confirmed') {
           this.showConfirmed(displayName, passId);
+          this.syncTicket();
         } else {
           this.showDeclined(displayName);
         }
@@ -787,6 +795,38 @@
         window.SoundFX && window.SoundFX.playError();
       } finally {
         this.isSubmitting = false;
+      }
+    }
+
+    /**
+     * Upload this guest's ticket image to the host's Drive in the background.
+     * Runs after a new confirmation and again on later visits until it succeeds,
+     * so guests who confirmed before this existed get their ticket saved too.
+     */
+    async syncTicket() {
+      const guest = this.guestData;
+      if (this.isSyncingTicket || guest.status !== 'confirmed' || guest.ticketSaved || !guest.passId) return;
+      this.isSyncingTicket = true;
+
+      try {
+        const canvas = await renderTicketImage(guest.name, guest.passId);
+        const result = await submitTicket(guest.name, guest.passId, canvas.toDataURL('image/jpeg', 0.9));
+        // "Not attending" / "Guest not found" won't change on retry, so stop trying for those too
+        if (result.saved || result.error === 'Not attending' || result.error === 'Guest not found') {
+          // Guest reset or re-submitted meanwhile: don't mark the new session
+          if (this.guestData !== guest) return;
+          guest.ticketSaved = true;
+          if (result.passId && result.passId !== guest.passId) {
+            // A ticket from an earlier visit is on Drive: show that same pass here
+            guest.passId = result.passId;
+            if (this.ticketPassIdEl) this.ticketPassIdEl.textContent = result.passId;
+          }
+          this.saveState();
+        }
+      } catch (err) {
+        console.warn('Ticket sync failed, will retry on next visit:', err);
+      } finally {
+        this.isSyncingTicket = false;
       }
     }
 
@@ -859,8 +899,11 @@
 
             if (parsed.status === 'confirmed') {
               if (this.confirmedNameEl) this.confirmedNameEl.textContent = parsed.name;
-              if (this.ticketPassIdEl) this.ticketPassIdEl.textContent = parsed.passId || 'HUT-IT-2026-CONFIRMED';
+              if (!parsed.passId) this.guestData.passId = this.generatePassId();
+              if (this.ticketPassIdEl) this.ticketPassIdEl.textContent = this.guestData.passId;
               this.setState('confirmed');
+              // Returning guest whose ticket isn't on Drive yet (e.g. confirmed before tickets were saved)
+              setTimeout(() => this.syncTicket(), 1500);
             } else if (parsed.status === 'declined') {
               if (this.declinedNameEl) this.declinedNameEl.textContent = parsed.name;
               this.setState('declined');
