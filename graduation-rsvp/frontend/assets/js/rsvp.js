@@ -17,7 +17,7 @@
   const STORAGE_KEY = 'hutech_grad_rsvp_2026';
 
   // Google Apps Script Web App URL (see backend/README.md). Paste the /exec URL here.
-  const API_URL = '';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxWwwsPYZffKC5PvjCm1gssKdZofaiHLcbv91wf_fkfFwWWKvpTW4SciR1YnVUWg7VJ/exec';
 
   /**
    * Send an RSVP to the Apps Script backend.
