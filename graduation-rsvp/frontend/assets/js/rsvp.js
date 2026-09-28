@@ -74,8 +74,8 @@
   /* ========================================================
    * Celebration Confetti / Particle Engine
    * ======================================================== */
-  const BURST_EMOJIS = ['🎓', '🌸', '💖', '✨', '🎉'];
-  const PETAL_EMOJIS = ['🌸', '💮', '💗', '🌷'];
+  const BURST_EMOJIS = ['🎓', '✨', '🎉', '💜', '🔮'];
+  const PETAL_EMOJIS = ['✨', '💜', '🔮', '💫'];
 
   class CelebrationFX {
     constructor(canvasId) {
@@ -108,11 +108,11 @@
       const particleCount = Math.min(window.innerWidth < 640 ? 70 : 120, 140);
       
       const colors = [
-        '#ff2e93', // Hot pink
-        '#ff85c0', // Soft pink
-        '#e11d74', // Deep rose
-        '#facc15', // Radiant gold
-        '#f43f5e', // HUTECH red accent
+        '#c084fc', // Lilac
+        '#e9d5ff', // Soft lavender
+        '#9333ea', // Deep violet
+        '#f3e8ff', // Pale lilac
+        '#d4d4d8', // Platinum
         '#ffffff'  // Pure star white
       ];
 
@@ -161,7 +161,7 @@
           vx: (Math.random() - 0.5) * 0.6,
           vy: 1.6 + Math.random() * 1.6,
           size: 16 + Math.random() * 12,
-          color: '#ff85c0',
+          color: '#e9d5ff',
           alpha: 1,
           decay: 0.0028 + Math.random() * 0.0018,
           rotation: Math.random() * 360,
@@ -299,9 +299,9 @@
   async function renderTicketImage(guestName, passId) {
     const W = 1600;
     const H = 800;
-    const PINK = '#ff2e93';
-    const SOFT_PINK = '#ff85c0';
-    const MUTED = '#b8a9b1';
+    const ACCENT = '#c084fc';
+    const SOFT_ACCENT = '#e9d5ff';
+    const MUTED = '#a1a1b5';
 
     // Make sure web fonts are ready before drawing text on canvas
     if (document.fonts && document.fonts.load) {
@@ -320,27 +320,27 @@
 
     // Background
     const bg = ctx.createRadialGradient(W * 0.35, 0, 50, W / 2, H * 0.4, W * 0.8);
-    bg.addColorStop(0, '#2a0b1d');
-    bg.addColorStop(0.55, '#060405');
-    bg.addColorStop(1, '#000000');
+    bg.addColorStop(0, '#1e1433');
+    bg.addColorStop(0.55, '#111118');
+    bg.addColorStop(1, '#0a0a10');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Card shell with pink → gold rim; the stub starts at sx
+    // Card shell with a lilac rim; the stub starts at sx
     const cx = 50, cy = 50, cw = W - 100, ch = H - 100;
     const stubW = 400;
     const sx = cx + cw - stubW;
     const notch = 26;
     ticketPath(ctx, cx, cy, cw, ch, 36, sx, notch);
-    ctx.fillStyle = 'rgba(20, 10, 16, 0.92)';
+    ctx.fillStyle = 'rgba(24, 24, 34, 0.92)';
     ctx.fill();
     const border = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
-    border.addColorStop(0, PINK);
-    border.addColorStop(0.5, '#e11d74');
-    border.addColorStop(1, '#facc15');
+    border.addColorStop(0, ACCENT);
+    border.addColorStop(0.5, '#9333ea');
+    border.addColorStop(1, '#f3e8ff');
     ctx.lineWidth = 4;
     ctx.strokeStyle = border;
-    ctx.shadowColor = 'rgba(255, 46, 147, 0.6)';
+    ctx.shadowColor = 'rgba(192, 132, 252, 0.6)';
     ctx.shadowBlur = 30;
     ctx.stroke();
     ctx.shadowBlur = 0;
@@ -348,7 +348,7 @@
     const dashed = (xa, ya, xb, yb, alpha = 0.4) => {
       ctx.save();
       ctx.setLineDash([12, 10]);
-      ctx.strokeStyle = `rgba(255, 46, 147, ${alpha})`;
+      ctx.strokeStyle = `rgba(192, 132, 252, ${alpha})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(xa, ya);
@@ -371,7 +371,7 @@
     ctx.fillStyle = '#34d399';
     ctx.fillText('STATUS 200', x0, cy + 65);
     ctx.textAlign = 'right';
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = ACCENT;
     ctx.fillText('OFFICIAL PASS // CONFIRMED', x1, cy + 65);
     ctx.textAlign = 'left';
     dashed(x0, cy + 95, x1, cy + 95);
@@ -383,12 +383,12 @@
     const xT = x0 + 150;
     ctx.font = '900 68px Orbitron, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(255, 46, 147, 0.5)';
+    ctx.shadowColor = 'rgba(192, 132, 252, 0.5)';
     ctx.shadowBlur = 24;
     ctx.fillText('GRADUATION', xT, cy + 195);
     const titleGrad = ctx.createLinearGradient(xT, 0, xT + 560, 0);
-    titleGrad.addColorStop(0, PINK);
-    titleGrad.addColorStop(1, SOFT_PINK);
+    titleGrad.addColorStop(0, ACCENT);
+    titleGrad.addColorStop(1, SOFT_ACCENT);
     ctx.fillStyle = titleGrad;
     ctx.font = '900 54px Orbitron, sans-serif';
     ctx.fillText('CLASS OF 2026', xT, cy + 262);
@@ -414,8 +414,8 @@
         nameLines = [nameLines[0], fitText(ctx, nameLines.slice(1).join(' '), mainW)];
       }
     }
-    ctx.fillStyle = PINK;
-    ctx.shadowColor = 'rgba(255, 46, 147, 0.55)';
+    ctx.fillStyle = ACCENT;
+    ctx.shadowColor = 'rgba(192, 132, 252, 0.55)';
     ctx.shadowBlur = 20;
     nameLines.forEach((line, i) => ctx.fillText(line, x0, cy + 448 + i * nameSize * 1.12));
     ctx.shadowBlur = 0;
@@ -440,7 +440,7 @@
     });
 
     ctx.font = '500 25px "Plus Jakarta Sans", sans-serif';
-    ctx.fillStyle = SOFT_PINK;
+    ctx.fillStyle = SOFT_ACCENT;
     ctx.fillText('📍 Thu Duc Campus — HUTECH Khu Công nghệ cao TP.HCM', x0, detailsTop + 142);
 
     /* ---------- Stub ---------- */
@@ -451,7 +451,7 @@
 
     ctx.textAlign = 'center';
     ctx.font = '700 26px "JetBrains Mono", monospace';
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = ACCENT;
     ctx.fillText('ADMIT ONE', sMid, cy + 65);
     dashed(s0, cy + 95, s1, cy + 95);
 
@@ -473,7 +473,7 @@
     const barY = cy + ch - 225;
     let seed = 7;
     for (const c of passId) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = ACCENT;
     for (let bx = barX; bx < barX + barW;) {
       seed = (seed * 1103515245 + 12345) >>> 0;
       const w = 2 + (seed % 5);

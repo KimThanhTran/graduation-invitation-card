@@ -18,16 +18,36 @@
   const BASE_W = 1080;
   const BASE_H = 1920;
 
-  const COLORS = {
-    red: '#dc2626',
-    softRed: '#f87171',
-    deepRed: '#b91c1c',
-    gold: '#d97706',
-    green: '#16a34a',
-    white: '#ffffff',
-    text: '#1c1917',
-    secondary: '#57534e',
-    muted: '#8a817c'
+  // Every color the image uses. Swap this object to try another palette.
+  // Current: Obsidian (#111118) + Lilac (#C084FC)
+  const THEME = {
+    bg: ['#1e1433', '#14141e', '#0b0b12'],          // top -> bottom
+    orbs: ['rgba(192, 132, 252, 0.16)', 'rgba(147, 51, 234, 0.12)', 'rgba(233, 213, 255, 0.07)'],
+    orbFade: 'rgba(17, 17, 24, 0)',
+    grid: 'rgba(192, 132, 252, 0.05)',
+    glyph: '#c084fc',
+    glyphHead: '#e9d5ff',
+    accent: '#c084fc',
+    accentGlow: 'rgba(192, 132, 252, 0.4)',
+    status: '#86efac',
+    statusGlow: 'rgba(134, 239, 172, 0.5)',
+    chipBg: 'rgba(134, 239, 172, 0.12)',
+    halo: 'rgba(192, 132, 252, 0.22)',
+    haloFade: 'rgba(192, 132, 252, 0)',
+    avatarFill: '#1a1a26',
+    ring: ['#e9d5ff', '#c084fc', '#9333ea'],
+    orbit: 'rgba(192, 132, 252, 0.45)',
+    title: ['#9333ea', '#f3e8ff', '#c084fc'],
+    titleGlow: 'rgba(192, 132, 252, 0.3)',
+    card: ['#1a1a26', '#14141e'],
+    cardShadow: 'rgba(0, 0, 0, 0.55)',
+    border: ['#e9d5ff', '#c084fc', '#6b21a8'],
+    dash: 'rgba(192, 132, 252, 0.35)',
+    quote: 'rgba(192, 132, 252, 0.18)',
+    senderGlow: 'rgba(192, 132, 252, 0.3)',
+    text: '#fafaff',
+    secondary: '#a1a1b5',
+    muted: '#71718a'
   };
 
   const FONT = {
@@ -202,29 +222,29 @@
    * ======================================================== */
   function drawBackground(ctx, rand) {
     const bg = ctx.createLinearGradient(0, 0, 0, BASE_H);
-    bg.addColorStop(0, '#ffffff');
-    bg.addColorStop(0.55, '#fff1f2');
-    bg.addColorStop(1, '#fee2e2');
+    bg.addColorStop(0, THEME.bg[0]);
+    bg.addColorStop(0.55, THEME.bg[1]);
+    bg.addColorStop(1, THEME.bg[2]);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, BASE_W, BASE_H);
 
     // Ambient glow orbs
     const orbs = [
-      { x: 540, y: 260, r: 620, color: 'rgba(220, 38, 38, 0.10)' },
-      { x: 940, y: 1680, r: 560, color: 'rgba(185, 28, 28, 0.10)' },
-      { x: 80, y: 1150, r: 420, color: 'rgba(248, 113, 113, 0.10)' }
+      { x: 540, y: 260, r: 620, color: THEME.orbs[0] },
+      { x: 940, y: 1680, r: 560, color: THEME.orbs[1] },
+      { x: 80, y: 1150, r: 420, color: THEME.orbs[2] }
     ];
     orbs.forEach((o) => {
       const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
       g.addColorStop(0, o.color);
-      g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      g.addColorStop(1, THEME.orbFade);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, BASE_W, BASE_H);
     });
 
     // Tech grid
     ctx.save();
-    ctx.strokeStyle = 'rgba(220, 38, 38, 0.06)';
+    ctx.strokeStyle = THEME.grid;
     ctx.lineWidth = 1;
     for (let x = 0; x <= BASE_W; x += 60) {
       ctx.beginPath();
@@ -255,7 +275,7 @@
         // Brighter "head" at the bottom of each column
         const isHead = i === length - 1;
         ctx.globalAlpha = isHead ? 0.3 : 0.04 + (i / length) * 0.1;
-        ctx.fillStyle = isHead ? COLORS.deepRed : COLORS.red;
+        ctx.fillStyle = isHead ? THEME.glyphHead : THEME.glyph;
         ctx.fillText(glyphs[Math.floor(rand() * glyphs.length)], x, y);
       }
     }
@@ -266,10 +286,10 @@
     const inset = 44;
     const len = 64;
     ctx.save();
-    ctx.strokeStyle = COLORS.red;
+    ctx.strokeStyle = THEME.accent;
     ctx.globalAlpha = 0.75;
     ctx.lineWidth = 4;
-    ctx.shadowColor = 'rgba(220, 38, 38, 0.35)';
+    ctx.shadowColor = THEME.accentGlow;
     ctx.shadowBlur = 6;
     [
       [inset, inset, 1, 1],
@@ -292,19 +312,19 @@
     ctx.textBaseline = 'middle';
 
     // Status dot
-    ctx.fillStyle = COLORS.green;
-    ctx.shadowColor = 'rgba(22, 163, 74, 0.5)';
+    ctx.fillStyle = THEME.status;
+    ctx.shadowColor = THEME.statusGlow;
     ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(104, 126, 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = THEME.accent;
     ctx.textAlign = 'left';
     ctx.fillText('SYS.MESSAGE // 2026', 126, 126);
 
-    ctx.fillStyle = COLORS.secondary;
+    ctx.fillStyle = THEME.secondary;
     ctx.textAlign = 'right';
     ctx.fillText('HUTECH · IT', BASE_W - 90, 126);
     ctx.restore();
@@ -318,8 +338,8 @@
     ctx.save();
     // Halo
     const halo = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.7);
-    halo.addColorStop(0, 'rgba(220, 38, 38, 0.18)');
-    halo.addColorStop(1, 'rgba(220, 38, 38, 0)');
+    halo.addColorStop(0, THEME.halo);
+    halo.addColorStop(1, THEME.haloFade);
     ctx.fillStyle = halo;
     ctx.fillRect(cx - r * 2, cy - r * 2, r * 4, r * 4);
 
@@ -329,7 +349,7 @@
     ctx.closePath();
     ctx.save();
     ctx.clip();
-    ctx.fillStyle = '#fee2e2';
+    ctx.fillStyle = THEME.avatarFill;
     ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
     if (photo) {
       const scale = Math.max((r * 2) / photo.naturalWidth, (r * 2) / photo.naturalHeight);
@@ -347,12 +367,12 @@
 
     // Neon ring
     const ring = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    ring.addColorStop(0, COLORS.red);
-    ring.addColorStop(0.5, COLORS.softRed);
-    ring.addColorStop(1, COLORS.deepRed);
+    ring.addColorStop(0, THEME.ring[0]);
+    ring.addColorStop(0.5, THEME.ring[1]);
+    ring.addColorStop(1, THEME.ring[2]);
     ctx.strokeStyle = ring;
     ctx.lineWidth = 7;
-    ctx.shadowColor = 'rgba(220, 38, 38, 0.4)';
+    ctx.shadowColor = THEME.accentGlow;
     ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
@@ -360,7 +380,7 @@
 
     // Outer dashed orbit
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba(220, 38, 38, 0.45)';
+    ctx.strokeStyle = THEME.orbit;
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 12]);
     ctx.beginPath();
@@ -376,17 +396,17 @@
 
     ctx.font = `900 104px ${FONT.display}`;
     const g = ctx.createLinearGradient(200, 0, 880, 0);
-    g.addColorStop(0, COLORS.deepRed);
-    g.addColorStop(0.5, COLORS.red);
-    g.addColorStop(1, COLORS.deepRed);
+    g.addColorStop(0, THEME.title[0]);
+    g.addColorStop(0.5, THEME.title[1]);
+    g.addColorStop(1, THEME.title[2]);
     ctx.fillStyle = g;
-    ctx.shadowColor = 'rgba(220, 38, 38, 0.25)';
+    ctx.shadowColor = THEME.titleGlow;
     ctx.shadowBlur = 18;
     ctx.fillText('THANK YOU', 540, 710);
 
     ctx.shadowBlur = 0;
     ctx.font = `600 40px ${FONT.heading}`;
-    ctx.fillStyle = COLORS.secondary;
+    ctx.fillStyle = THEME.secondary;
     ctx.fillText('Cảm ơn lời chúc của bạn', 540, 776);
     ctx.restore();
   }
@@ -401,19 +421,19 @@
     // Card body
     roundRect(ctx, x, y, w, h, 36);
     const body = ctx.createLinearGradient(x, y, x + w, y + h);
-    body.addColorStop(0, '#ffffff');
-    body.addColorStop(1, '#fff7f7');
+    body.addColorStop(0, THEME.card[0]);
+    body.addColorStop(1, THEME.card[1]);
     ctx.fillStyle = body;
-    ctx.shadowColor = 'rgba(185, 28, 28, 0.18)';
+    ctx.shadowColor = THEME.cardShadow;
     ctx.shadowBlur = 50;
     ctx.fill();
     ctx.shadowBlur = 0;
 
     // Border
     const border = ctx.createLinearGradient(x, y, x + w, y + h);
-    border.addColorStop(0, COLORS.red);
-    border.addColorStop(0.6, COLORS.deepRed);
-    border.addColorStop(1, COLORS.gold);
+    border.addColorStop(0, THEME.border[0]);
+    border.addColorStop(0.6, THEME.border[1]);
+    border.addColorStop(1, THEME.border[2]);
     ctx.strokeStyle = border;
     ctx.lineWidth = 3;
     ctx.stroke();
@@ -424,24 +444,24 @@
     const chip = 'STATUS 200';
     const chipW = ctx.measureText(chip).width + 28;
     roundRect(ctx, x + 44, y + 44, chipW, 44, 8);
-    ctx.fillStyle = 'rgba(22, 163, 74, 0.12)';
+    ctx.fillStyle = THEME.chipBg;
     ctx.fill();
-    ctx.fillStyle = COLORS.green;
+    ctx.fillStyle = THEME.status;
     ctx.textAlign = 'left';
     ctx.fillText(chip, x + 58, y + 67);
 
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = THEME.accent;
     ctx.textAlign = 'right';
     ctx.font = `600 24px ${FONT.mono}`;
     ctx.fillText('MESSAGE // RECEIVED', x + w - 44, y + 67);
 
-    dashedLine(ctx, x + 44, y + 118, x + w - 44, 'rgba(220, 38, 38, 0.35)');
+    dashedLine(ctx, x + 44, y + 118, x + w - 44, THEME.dash);
 
     // Decorative quote mark
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.font = `700 190px ${FONT.heading}`;
-    ctx.fillStyle = 'rgba(220, 38, 38, 0.16)';
+    ctx.fillStyle = THEME.quote;
     ctx.fillText('“', x + 36, y + 290);
 
     // Wish text, auto-sized to fill the box
@@ -452,7 +472,7 @@
     // Narrower than the card so centered lines clear the quote mark
     const fit = fitText(ctx, wish, (s) => `500 ${s}px ${FONT.body}`, w - 260, boxHeight, 58, 28, lineHeight);
     ctx.font = `500 ${fit.size}px ${FONT.body}`;
-    ctx.fillStyle = data.wish ? COLORS.text : COLORS.muted;
+    ctx.fillStyle = data.wish ? THEME.text : THEME.muted;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const blockHeight = fit.lines.length * fit.size * lineHeight;
@@ -462,21 +482,21 @@
       lineY += fit.size * lineHeight;
     });
 
-    dashedLine(ctx, x + 44, y + 630, x + w - 44, 'rgba(220, 38, 38, 0.35)');
+    dashedLine(ctx, x + 44, y + 630, x + w - 44, THEME.dash);
 
     // Sender
     const sender = data.sender ? `— ${data.sender}` : '— Người gửi';
     const senderSize = fitSingleLine(ctx, sender, (s) => `700 ${s}px ${FONT.heading}`, w - 120, 50, 30);
     ctx.font = `700 ${senderSize}px ${FONT.heading}`;
-    ctx.fillStyle = data.sender ? COLORS.red : COLORS.muted;
-    ctx.shadowColor = 'rgba(220, 38, 38, 0.25)';
+    ctx.fillStyle = data.sender ? THEME.accent : THEME.muted;
+    ctx.shadowColor = THEME.senderGlow;
     ctx.shadowBlur = data.sender ? 8 : 0;
     ctx.fillText(sender, BASE_W / 2, data.relation ? y + 690 : y + 712);
     ctx.shadowBlur = 0;
 
     if (data.relation) {
       ctx.font = `600 26px ${FONT.mono}`;
-      ctx.fillStyle = COLORS.secondary;
+      ctx.fillStyle = THEME.secondary;
       ctx.fillText(data.relation.toUpperCase(), BASE_W / 2, y + 744);
     }
     ctx.restore();
@@ -496,10 +516,10 @@
     meta.forEach(([label, value], i) => {
       const cx = 220 + i * 320;
       ctx.font = `600 20px ${FONT.mono}`;
-      ctx.fillStyle = COLORS.muted;
+      ctx.fillStyle = THEME.muted;
       ctx.fillText(label, cx, 1690);
       ctx.font = `700 24px ${FONT.mono}`;
-      ctx.fillStyle = COLORS.text;
+      ctx.fillStyle = THEME.text;
       ctx.fillText(value, cx, 1724);
     });
 
@@ -509,7 +529,7 @@
     const barWidth = 520;
     let bx = (BASE_W - barWidth) / 2;
     const end = bx + barWidth;
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = THEME.accent;
     while (bx < end) {
       const w = 2 + Math.floor(rand() * 5);
       if (rand() > 0.35) ctx.fillRect(bx, barTop, Math.min(w, end - bx), barHeight);
@@ -517,7 +537,7 @@
     }
 
     ctx.font = `700 24px ${FONT.mono}`;
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = THEME.accent;
     ctx.fillText(code, BASE_W / 2, 1850);
     ctx.restore();
   }

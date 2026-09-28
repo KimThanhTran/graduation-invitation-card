@@ -4,7 +4,7 @@
  * Features:
  * - Emoji characters: 🎓, 📜, 💻, 📚, ✨, ⚡, 👨‍💻, 👩‍💻
  * - Vertical falling streams with variable speeds and opacities
- * - Subtle hot pink / rose / blush accents with fading trail
+ * - Subtle lilac / violet accents with fading trail
  * - Non-intrusive subtle background so text readability remains pristine
  * - Fully responsive with Retina / mobile performance throttling
  */
@@ -16,11 +16,11 @@
   
   // Neon accent colors for the trailing glow & highlights
   const ACCENT_COLORS = [
-    { text: '#ff2e93', glow: 'rgba(255, 46, 147, 0.45)' }, // Hot Pink
-    { text: '#ff85c0', glow: 'rgba(255, 133, 192, 0.4)' },  // Soft Pink
-    { text: '#e11d74', glow: 'rgba(225, 29, 116, 0.4)' },  // Deep Rose
-    { text: '#f9a8d4', glow: 'rgba(249, 168, 212, 0.35)' }, // Blush Glow
-    { text: '#fcd34d', glow: 'rgba(252, 211, 77, 0.35)' }   // Subtle Gold
+    { text: '#c084fc', glow: 'rgba(192, 132, 252, 0.45)' }, // Lilac
+    { text: '#e9d5ff', glow: 'rgba(233, 213, 255, 0.4)' },  // Soft Lavender
+    { text: '#9333ea', glow: 'rgba(147, 51, 234, 0.4)' },  // Deep Violet
+    { text: '#f3e8ff', glow: 'rgba(243, 232, 255, 0.35)' }, // Pale Lilac Glow
+    { text: '#7dd3fc', glow: 'rgba(125, 211, 252, 0.35)' }   // Sky Accent
   ];
 
   class MatrixRain {
@@ -122,7 +122,7 @@
 
         // Fading dark trail effect
         // Dark navy-black with subtle transparency
-        this.ctx.fillStyle = 'rgba(5, 4, 5, 0.18)';
+        this.ctx.fillStyle = 'rgba(17, 17, 24, 0.18)';
         this.ctx.fillRect(0, 0, this.width, this.height);
 
         this.ctx.font = `${this.fontSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
