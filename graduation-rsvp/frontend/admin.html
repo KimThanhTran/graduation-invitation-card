@@ -47,10 +47,25 @@
         <div class="wish-inbox">
           <div class="inbox-head">
             <span class="field-label">Lời chúc đã nhận <em id="inbox-count"></em></span>
-            <button type="button" class="btn-link" id="refresh-btn">Tải lại</button>
+            <div class="inbox-tools">
+              <label class="check check-sm" id="select-all-wrap" hidden>
+                <input type="checkbox" id="select-all" />
+                <span>Chọn tất cả</span>
+              </label>
+              <button type="button" class="btn-link" id="refresh-btn">Tải lại</button>
+            </div>
           </div>
           <ul class="inbox-list" id="inbox-list"></ul>
           <p class="inbox-empty" id="inbox-empty" hidden>Chưa có lời chúc nào trong sheet.</p>
+
+          <div class="bulk-bar" id="bulk-bar" hidden>
+            <button type="button" class="btn btn-secondary" id="bulk-download-btn" disabled>
+              ⬇ TẢI LỜI CHÚC ĐÃ CHỌN
+            </button>
+            <p class="bulk-hint">File ZIP gồm ảnh story của từng lời chúc (theo kích thước và tuỳ chọn ảnh bên dưới)
+              và 1 file .txt chứa toàn bộ nội dung.</p>
+            <p class="feedback" id="bulk-feedback" aria-live="polite"></p>
+          </div>
         </div>
 
         <label class="field">

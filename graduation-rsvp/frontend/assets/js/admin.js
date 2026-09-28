@@ -588,12 +588,19 @@
     inboxList: $('inbox-list'),
     inboxEmpty: $('inbox-empty'),
     inboxCount: $('inbox-count'),
-    refreshBtn: $('refresh-btn')
+    refreshBtn: $('refresh-btn'),
+    selectAllWrap: $('select-all-wrap'),
+    selectAll: $('select-all'),
+    bulkBar: $('bulk-bar'),
+    bulkDownloadBtn: $('bulk-download-btn'),
+    bulkFeedback: $('bulk-feedback')
   };
 
   let photo = null;
   let renderTimer = null;
   let password = null;
+  let inboxWishes = [];          // wishes currently listed in the inbox
+  const picked = new Set();      // indexes into inboxWishes chosen for bulk download
 
   function setFeedback(el, message, type) {
     el.textContent = message;
@@ -618,12 +625,26 @@
     renderTimer = setTimeout(render, 120);
   }
 
-  function fileName() {
-    const slug = readForm().sender
+  function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function slugify(s) {
+    return String(s || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/đ/g, 'd').replace(/Đ/g, 'D')
       .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    return `loi-chuc-${slug || 'khach-moi'}.png`;
+  }
+
+  function fileName() {
+    return `loi-chuc-${slugify(readForm().sender) || 'khach-moi'}.png`;
   }
 
   function canvasBlob() {
@@ -646,15 +667,9 @@
     if (!validateForExport()) return;
     try {
       const blob = await canvasBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName();
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setFeedback(els.studioFeedback, `Đã tải ${a.download} (${els.canvas.width}×${els.canvas.height}).`, 'success');
+      const name = fileName();
+      saveBlob(blob, name);
+      setFeedback(els.studioFeedback, `Đã tải ${name} (${els.canvas.width}×${els.canvas.height}).`, 'success');
     } catch (err) {
       console.error(err);
       setFeedback(els.studioFeedback, 'Không xuất được ảnh. Hãy mở trang qua web (http/https), không mở file trực tiếp.', 'error');
@@ -705,12 +720,34 @@
 
   function renderInbox(guests) {
     const wishes = extractWishes(guests);
+    inboxWishes = wishes;
+    picked.clear();
     els.inboxList.innerHTML = '';
     els.inboxCount.textContent = wishes.length ? `(${wishes.length})` : '';
     els.inboxEmpty.hidden = wishes.length > 0;
+    els.selectAllWrap.hidden = wishes.length === 0;
+    els.bulkBar.hidden = wishes.length === 0;
+    setFeedback(els.bulkFeedback, '', '');
 
-    wishes.forEach((wish) => {
+    wishes.forEach((wish, index) => {
       const li = document.createElement('li');
+      li.className = 'inbox-row';
+
+      // Checkbox picks the wish for bulk download; clicking the wish itself still opens it in the editor
+      const pick = document.createElement('label');
+      pick.className = 'inbox-pick';
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.setAttribute('aria-label', `Chọn lời chúc của ${wish.name}`);
+      box.addEventListener('change', () => {
+        if (box.checked) picked.add(index);
+        else picked.delete(index);
+        li.classList.toggle('picked', box.checked);
+        updateBulkBar();
+      });
+      pick.appendChild(box);
+      li.appendChild(pick);
+
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'inbox-item';
@@ -734,6 +771,106 @@
       li.appendChild(button);
       els.inboxList.appendChild(li);
     });
+    updateBulkBar();
+  }
+
+  /* ========================================================
+   * Bulk download: selected wishes -> one ZIP (a PNG per wish + a .txt)
+   * ======================================================== */
+  const JSZIP_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+  const JSZIP_SRI = 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==';
+  let jszipPromise = null;
+
+  // Loaded on first use so the studio page stays light
+  function loadJSZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);
+    if (!jszipPromise) {
+      jszipPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = JSZIP_SRC;
+        script.integrity = JSZIP_SRI;
+        script.crossOrigin = 'anonymous';
+        script.onload = () => resolve(window.JSZip);
+        script.onerror = () => {
+          jszipPromise = null;
+          reject(new Error('Could not load JSZip'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+    return jszipPromise;
+  }
+
+  function updateBulkBar() {
+    const count = picked.size;
+    const total = inboxWishes.length;
+    els.bulkDownloadBtn.disabled = count === 0;
+    els.bulkDownloadBtn.textContent = count
+      ? `⬇ TẢI ${count} LỜI CHÚC ĐÃ CHỌN (ZIP)`
+      : '⬇ TẢI LỜI CHÚC ĐÃ CHỌN';
+    els.selectAll.checked = total > 0 && count === total;
+    els.selectAll.indeterminate = count > 0 && count < total;
+  }
+
+  function setAllPicked(checked) {
+    picked.clear();
+    els.inboxList.querySelectorAll('.inbox-row').forEach((row, index) => {
+      row.querySelector('.inbox-pick input').checked = checked;
+      row.classList.toggle('picked', checked);
+      if (checked) picked.add(index);
+    });
+    updateBulkBar();
+  }
+
+  function blobFromCanvas(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Export failed'))), 'image/png');
+    });
+  }
+
+  async function handleBulkDownload() {
+    const chosen = [...picked].sort((a, b) => a - b).map((i) => inboxWishes[i]).filter(Boolean);
+    if (!chosen.length) return;
+
+    els.bulkDownloadBtn.disabled = true;
+    setFeedback(els.bulkFeedback, 'Đang chuẩn bị...', '');
+    try {
+      const JSZip = await loadJSZip();
+      const zip = new JSZip();
+      const width = Number(els.sizeSelect.value) || BASE_W;
+      const usePhoto = els.photoToggle.checked ? photo : null;
+      const canvas = document.createElement('canvas');
+      const textParts = [];
+
+      for (let i = 0; i < chosen.length; i++) {
+        const wish = chosen[i];
+        setFeedback(els.bulkFeedback, `Đang tạo ảnh ${i + 1}/${chosen.length}...`, '');
+
+        renderWish(canvas, { sender: wish.name, relation: '', wish: wish.text.slice(0, 500), width }, usePhoto);
+        const blob = await blobFromCanvas(canvas);
+
+        // Numbered so several wishes from the same guest never overwrite each other
+        zip.file(`${String(i + 1).padStart(2, '0')}-loi-chuc-${slugify(wish.name) || 'khach-moi'}.png`, blob);
+
+        textParts.push(`${i + 1}. ${wish.name}${wish.wishedAt ? ` (${wish.wishedAt})` : ''}\n${wish.text}`);
+
+        // Let the page repaint between images
+        await new Promise((r) => setTimeout(r, 0));
+      }
+
+      zip.file('loi-chuc.txt', `﻿${textParts.join('\n\n----------\n\n')}\n`);
+
+      setFeedback(els.bulkFeedback, 'Đang nén file ZIP...', '');
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const stamp = new Date().toISOString().slice(0, 10);
+      saveBlob(zipBlob, `loi-chuc-${stamp}.zip`);
+      setFeedback(els.bulkFeedback, `Đã tải ${chosen.length} lời chúc (${chosen.length} ảnh + loi-chuc.txt).`, 'success');
+    } catch (err) {
+      console.error(err);
+      setFeedback(els.bulkFeedback, 'Không tạo được file ZIP. Kiểm tra mạng rồi thử lại.', 'error');
+    } finally {
+      updateBulkBar();
+    }
   }
 
   async function refreshInbox() {
@@ -851,6 +988,8 @@
     els.photoToggle.addEventListener('change', render);
 
     els.downloadBtn.addEventListener('click', handleDownload);
+    els.selectAll.addEventListener('change', () => setAllPicked(els.selectAll.checked));
+    els.bulkDownloadBtn.addEventListener('click', handleBulkDownload);
     els.shareBtn.addEventListener('click', handleShare);
 
     // Native share sheet (post straight to a story) where the browser supports sharing files
