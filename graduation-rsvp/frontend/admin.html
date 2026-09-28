@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Wish Studio | Admin</title>
+  <meta name="theme-color" content="#050711" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+
+<body>
+  <main class="admin-shell">
+
+    <!-- Login -->
+    <section class="panel login-panel" id="login-view">
+      <span class="panel-tag">// ADMIN ACCESS</span>
+      <h1 class="panel-title">WISH STUDIO</h1>
+      <p class="panel-sub">Tạo ảnh lời chúc để đăng story. Chỉ dành cho chủ thiệp.</p>
+
+      <form id="login-form" novalidate>
+        <label class="field">
+          <span class="field-label">Mật khẩu</span>
+          <input type="password" id="password-input" autocomplete="current-password" required />
+        </label>
+        <p class="feedback" id="login-feedback" aria-live="polite"></p>
+        <button type="submit" class="btn btn-primary" id="login-btn">ĐĂNG NHẬP</button>
+      </form>
+    </section>
+
+    <!-- Studio -->
+    <section class="studio" id="studio-view" hidden>
+      <div class="panel form-panel">
+        <div class="panel-head">
+          <span class="panel-tag">// WISH STUDIO</span>
+          <button type="button" class="btn-link" id="logout-btn">Đăng xuất</button>
+        </div>
+
+        <div class="wish-inbox">
+          <div class="inbox-head">
+            <span class="field-label">Lời chúc đã nhận <em id="inbox-count"></em></span>
+            <button type="button" class="btn-link" id="refresh-btn">Tải lại</button>
+          </div>
+          <ul class="inbox-list" id="inbox-list"></ul>
+          <p class="inbox-empty" id="inbox-empty" hidden>Chưa có lời chúc nào trong sheet.</p>
+        </div>
+
+        <label class="field">
+          <span class="field-label">Người gửi lời chúc</span>
+          <input type="text" id="sender-input" list="guest-list" maxlength="60"
+            placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off" />
+          <datalist id="guest-list"></datalist>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Mối quan hệ <em>(không bắt buộc)</em></span>
+          <input type="text" id="relation-input" maxlength="40" placeholder="Ví dụ: Bạn thân, Thầy hướng dẫn..." />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Nội dung lời chúc <em id="wish-count">0/500</em></span>
+          <textarea id="wish-input" rows="7" maxlength="500"
+            placeholder="Dán lời chúc bạn nhận được vào đây..."></textarea>
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Kích thước</span>
+            <select id="size-select">
+              <option value="1080">1080 × 1920 (Full HD)</option>
+              <option value="1440">1440 × 2560 (2K)</option>
+            </select>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="photo-toggle" checked />
+            <span>Hiện ảnh tốt nghiệp</span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="download-btn">⬇ TẢI ẢNH PNG</button>
+          <button type="button" class="btn btn-secondary" id="share-btn" hidden>↗ CHIA SẺ</button>
+        </div>
+        <p class="feedback" id="studio-feedback" aria-live="polite"></p>
+      </div>
+
+      <div class="panel preview-panel">
+        <span class="panel-tag">// PREVIEW</span>
+        <canvas id="wish-canvas" width="1080" height="1920" aria-label="Xem trước ảnh lời chúc"></canvas>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+
+</html>

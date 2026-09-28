@@ -40,8 +40,18 @@ you to authorize Drive access.
    - Execute as: **Me**
    - Who has access: **Anyone**
 4. Authorize, then copy the Web app URL (`https://script.google.com/macros/s/.../exec`).
-5. Paste it into `API_URL` at the top of `frontend/assets/js/rsvp.js`.
+5. Paste it into `API_URL` in `frontend/assets/js/config.js`.
 6. Set the sheet's sharing back to **Restricted**.
+
+## Admin password (Wish Studio)
+
+`frontend/admin.html` asks for a password, checked here by the `adminAuth` action.
+The password lives only in Apps Script, never in the repo:
+
+1. Apps Script editor → **Project Settings** (⚙️) → **Script properties** → **Add script property**.
+2. Property: `ADMIN_PASSWORD`, Value: your password → **Save**.
+
+Changing the password takes effect immediately (no redeploy needed).
 
 After editing `Code.gs` later: **Deploy → Manage deployments → Edit → Version: New version**,
 otherwise the URL keeps serving the old code.

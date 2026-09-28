@@ -16,6 +16,9 @@
  *
  * Tickets go to the Drive folder named TICKET_FOLDER_NAME (created on first use, private to the owner).
  *
+ * Admin (admin.html): action "adminAuth" checks the password stored in
+ * Project Settings -> Script properties -> ADMIN_PASSWORD and returns guests with their wishes.
+ *
  * Deploy as Web app: Execute as "Me", Who has access "Anyone".
  * The sheet itself can stay private (Restricted).
  */
@@ -67,9 +70,29 @@ function json(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function handleAdminAuth(data) {
+  const expected = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+  if (!expected) return json({ error: 'ADMIN_PASSWORD is not configured' });
+
+  if (String(data.password || '') !== expected) {
+    Utilities.sleep(1500); // slow down password guessing
+    return json({ ok: false });
+  }
+
+  // Columns B..F: Full Name | Status | Responded At | Wish | Wished At
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  const lastRow = sheet.getLastRow();
+  const guests = lastRow < 2 ? [] : sheet.getRange(2, 2, lastRow - 1, 5).getDisplayValues()
+    .filter(r => r[0])
+    .map(r => ({ name: r[0], status: r[1], wish: r[3], wishedAt: r[4] }));
+  return json({ ok: true, guests: guests });
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    if (data.action === 'adminAuth') return handleAdminAuth(data);
+
     const name = cleanName(data.name);
 
     if (name.length < 2) return json({ error: 'Invalid name' });
