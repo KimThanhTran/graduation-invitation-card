@@ -19,15 +19,15 @@
   const BASE_H = 1920;
 
   const COLORS = {
-    pink: '#ff2e93',
-    softPink: '#ff85c0',
-    rose: '#e11d74',
-    gold: '#facc15',
-    green: '#34d399',
+    red: '#dc2626',
+    softRed: '#f87171',
+    deepRed: '#b91c1c',
+    gold: '#d97706',
+    green: '#16a34a',
     white: '#ffffff',
-    text: '#f8f1f5',
-    secondary: '#b8a9b1',
-    muted: '#857680'
+    text: '#1c1917',
+    secondary: '#57534e',
+    muted: '#8a817c'
   };
 
   const FONT = {
@@ -202,29 +202,29 @@
    * ======================================================== */
   function drawBackground(ctx, rand) {
     const bg = ctx.createLinearGradient(0, 0, 0, BASE_H);
-    bg.addColorStop(0, '#2a0b1d');
-    bg.addColorStop(0.45, '#0b0609');
-    bg.addColorStop(1, '#000000');
+    bg.addColorStop(0, '#ffffff');
+    bg.addColorStop(0.55, '#fff1f2');
+    bg.addColorStop(1, '#fee2e2');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, BASE_W, BASE_H);
 
     // Ambient glow orbs
     const orbs = [
-      { x: 540, y: 260, r: 620, color: 'rgba(255, 46, 147, 0.28)' },
-      { x: 940, y: 1680, r: 560, color: 'rgba(225, 29, 116, 0.26)' },
-      { x: 80, y: 1150, r: 420, color: 'rgba(236, 72, 153, 0.14)' }
+      { x: 540, y: 260, r: 620, color: 'rgba(220, 38, 38, 0.10)' },
+      { x: 940, y: 1680, r: 560, color: 'rgba(185, 28, 28, 0.10)' },
+      { x: 80, y: 1150, r: 420, color: 'rgba(248, 113, 113, 0.10)' }
     ];
     orbs.forEach((o) => {
       const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
       g.addColorStop(0, o.color);
-      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      g.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, BASE_W, BASE_H);
     });
 
     // Tech grid
     ctx.save();
-    ctx.strokeStyle = 'rgba(255, 46, 147, 0.045)';
+    ctx.strokeStyle = 'rgba(220, 38, 38, 0.06)';
     ctx.lineWidth = 1;
     for (let x = 0; x <= BASE_W; x += 60) {
       ctx.beginPath();
@@ -254,8 +254,8 @@
         if (y > BASE_H) break;
         // Brighter "head" at the bottom of each column
         const isHead = i === length - 1;
-        ctx.globalAlpha = isHead ? 0.35 : 0.05 + (i / length) * 0.14;
-        ctx.fillStyle = isHead ? COLORS.white : COLORS.pink;
+        ctx.globalAlpha = isHead ? 0.3 : 0.04 + (i / length) * 0.1;
+        ctx.fillStyle = isHead ? COLORS.deepRed : COLORS.red;
         ctx.fillText(glyphs[Math.floor(rand() * glyphs.length)], x, y);
       }
     }
@@ -266,11 +266,11 @@
     const inset = 44;
     const len = 64;
     ctx.save();
-    ctx.strokeStyle = COLORS.pink;
+    ctx.strokeStyle = COLORS.red;
     ctx.globalAlpha = 0.75;
     ctx.lineWidth = 4;
-    ctx.shadowColor = COLORS.pink;
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(220, 38, 38, 0.35)';
+    ctx.shadowBlur = 6;
     [
       [inset, inset, 1, 1],
       [BASE_W - inset, inset, -1, 1],
@@ -293,14 +293,14 @@
 
     // Status dot
     ctx.fillStyle = COLORS.green;
-    ctx.shadowColor = COLORS.green;
-    ctx.shadowBlur = 14;
+    ctx.shadowColor = 'rgba(22, 163, 74, 0.5)';
+    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(104, 126, 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    ctx.fillStyle = COLORS.pink;
+    ctx.fillStyle = COLORS.red;
     ctx.textAlign = 'left';
     ctx.fillText('SYS.MESSAGE // 2026', 126, 126);
 
@@ -318,8 +318,8 @@
     ctx.save();
     // Halo
     const halo = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.7);
-    halo.addColorStop(0, 'rgba(255, 46, 147, 0.35)');
-    halo.addColorStop(1, 'rgba(255, 46, 147, 0)');
+    halo.addColorStop(0, 'rgba(220, 38, 38, 0.18)');
+    halo.addColorStop(1, 'rgba(220, 38, 38, 0)');
     ctx.fillStyle = halo;
     ctx.fillRect(cx - r * 2, cy - r * 2, r * 4, r * 4);
 
@@ -329,7 +329,7 @@
     ctx.closePath();
     ctx.save();
     ctx.clip();
-    ctx.fillStyle = '#140a10';
+    ctx.fillStyle = '#fee2e2';
     ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
     if (photo) {
       const scale = Math.max((r * 2) / photo.naturalWidth, (r * 2) / photo.naturalHeight);
@@ -347,20 +347,20 @@
 
     // Neon ring
     const ring = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    ring.addColorStop(0, COLORS.pink);
-    ring.addColorStop(0.5, COLORS.softPink);
-    ring.addColorStop(1, COLORS.rose);
+    ring.addColorStop(0, COLORS.red);
+    ring.addColorStop(0.5, COLORS.softRed);
+    ring.addColorStop(1, COLORS.deepRed);
     ctx.strokeStyle = ring;
     ctx.lineWidth = 7;
-    ctx.shadowColor = COLORS.pink;
-    ctx.shadowBlur = 26;
+    ctx.shadowColor = 'rgba(220, 38, 38, 0.4)';
+    ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
     ctx.stroke();
 
     // Outer dashed orbit
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba(255, 46, 147, 0.45)';
+    ctx.strokeStyle = 'rgba(220, 38, 38, 0.45)';
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 12]);
     ctx.beginPath();
@@ -376,12 +376,12 @@
 
     ctx.font = `900 104px ${FONT.display}`;
     const g = ctx.createLinearGradient(200, 0, 880, 0);
-    g.addColorStop(0, COLORS.pink);
-    g.addColorStop(0.5, COLORS.white);
-    g.addColorStop(1, COLORS.softPink);
+    g.addColorStop(0, COLORS.deepRed);
+    g.addColorStop(0.5, COLORS.red);
+    g.addColorStop(1, COLORS.deepRed);
     ctx.fillStyle = g;
-    ctx.shadowColor = 'rgba(255, 46, 147, 0.6)';
-    ctx.shadowBlur = 34;
+    ctx.shadowColor = 'rgba(220, 38, 38, 0.25)';
+    ctx.shadowBlur = 18;
     ctx.fillText('THANK YOU', 540, 710);
 
     ctx.shadowBlur = 0;
@@ -398,21 +398,21 @@
     const h = 800;
 
     ctx.save();
-    // Glass body
+    // Card body
     roundRect(ctx, x, y, w, h, 36);
     const body = ctx.createLinearGradient(x, y, x + w, y + h);
-    body.addColorStop(0, 'rgba(24, 11, 19, 0.9)');
-    body.addColorStop(1, 'rgba(8, 4, 7, 0.94)');
+    body.addColorStop(0, '#ffffff');
+    body.addColorStop(1, '#fff7f7');
     ctx.fillStyle = body;
-    ctx.shadowColor = 'rgba(255, 46, 147, 0.22)';
+    ctx.shadowColor = 'rgba(185, 28, 28, 0.18)';
     ctx.shadowBlur = 50;
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Neon border
+    // Border
     const border = ctx.createLinearGradient(x, y, x + w, y + h);
-    border.addColorStop(0, COLORS.pink);
-    border.addColorStop(0.5, COLORS.rose);
+    border.addColorStop(0, COLORS.red);
+    border.addColorStop(0.6, COLORS.deepRed);
     border.addColorStop(1, COLORS.gold);
     ctx.strokeStyle = border;
     ctx.lineWidth = 3;
@@ -424,24 +424,24 @@
     const chip = 'STATUS 200';
     const chipW = ctx.measureText(chip).width + 28;
     roundRect(ctx, x + 44, y + 44, chipW, 44, 8);
-    ctx.fillStyle = 'rgba(52, 211, 153, 0.14)';
+    ctx.fillStyle = 'rgba(22, 163, 74, 0.12)';
     ctx.fill();
     ctx.fillStyle = COLORS.green;
     ctx.textAlign = 'left';
     ctx.fillText(chip, x + 58, y + 67);
 
-    ctx.fillStyle = COLORS.pink;
+    ctx.fillStyle = COLORS.red;
     ctx.textAlign = 'right';
     ctx.font = `600 24px ${FONT.mono}`;
     ctx.fillText('MESSAGE // RECEIVED', x + w - 44, y + 67);
 
-    dashedLine(ctx, x + 44, y + 118, x + w - 44, 'rgba(255, 46, 147, 0.35)');
+    dashedLine(ctx, x + 44, y + 118, x + w - 44, 'rgba(220, 38, 38, 0.35)');
 
     // Decorative quote mark
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.font = `700 190px ${FONT.heading}`;
-    ctx.fillStyle = 'rgba(255, 46, 147, 0.22)';
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.16)';
     ctx.fillText('“', x + 36, y + 290);
 
     // Wish text, auto-sized to fill the box
@@ -462,15 +462,15 @@
       lineY += fit.size * lineHeight;
     });
 
-    dashedLine(ctx, x + 44, y + 630, x + w - 44, 'rgba(255, 46, 147, 0.35)');
+    dashedLine(ctx, x + 44, y + 630, x + w - 44, 'rgba(220, 38, 38, 0.35)');
 
     // Sender
     const sender = data.sender ? `— ${data.sender}` : '— Người gửi';
     const senderSize = fitSingleLine(ctx, sender, (s) => `700 ${s}px ${FONT.heading}`, w - 120, 50, 30);
     ctx.font = `700 ${senderSize}px ${FONT.heading}`;
-    ctx.fillStyle = data.sender ? COLORS.pink : COLORS.muted;
-    ctx.shadowColor = 'rgba(255, 46, 147, 0.45)';
-    ctx.shadowBlur = data.sender ? 16 : 0;
+    ctx.fillStyle = data.sender ? COLORS.red : COLORS.muted;
+    ctx.shadowColor = 'rgba(220, 38, 38, 0.25)';
+    ctx.shadowBlur = data.sender ? 8 : 0;
     ctx.fillText(sender, BASE_W / 2, data.relation ? y + 690 : y + 712);
     ctx.shadowBlur = 0;
 
@@ -509,7 +509,7 @@
     const barWidth = 520;
     let bx = (BASE_W - barWidth) / 2;
     const end = bx + barWidth;
-    ctx.fillStyle = COLORS.pink;
+    ctx.fillStyle = COLORS.red;
     while (bx < end) {
       const w = 2 + Math.floor(rand() * 5);
       if (rand() > 0.35) ctx.fillRect(bx, barTop, Math.min(w, end - bx), barHeight);
@@ -517,7 +517,7 @@
     }
 
     ctx.font = `700 24px ${FONT.mono}`;
-    ctx.fillStyle = COLORS.pink;
+    ctx.fillStyle = COLORS.red;
     ctx.fillText(code, BASE_W / 2, 1850);
     ctx.restore();
   }

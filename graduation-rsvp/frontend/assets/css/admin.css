@@ -356,8 +356,8 @@ select:focus {
   aspect-ratio: 9 / 16;
   border-radius: 14px;
   border: 1px solid var(--border-subtle);
-  background: #060405;
-  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.45);
+  background: #ffffff;
+  box-shadow: 0 18px 40px -18px rgba(185, 28, 28, 0.35);
 }
 
 @media (max-width: 820px) {
