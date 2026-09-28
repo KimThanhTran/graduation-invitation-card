@@ -19,35 +19,35 @@
   const BASE_H = 1920;
 
   // Every color the image uses. Swap this object to try another palette.
-  // Current: Obsidian (#111118) + Lilac (#C084FC)
+  // Current: Nordic Cyber (#0D1117 + mint #40C463 + purple #7952B3)
   const THEME = {
-    bg: ['#1e1433', '#14141e', '#0b0b12'],          // top -> bottom
-    orbs: ['rgba(192, 132, 252, 0.16)', 'rgba(147, 51, 234, 0.12)', 'rgba(233, 213, 255, 0.07)'],
-    orbFade: 'rgba(17, 17, 24, 0)',
-    grid: 'rgba(192, 132, 252, 0.05)',
-    glyph: '#c084fc',
-    glyphHead: '#e9d5ff',
-    accent: '#c084fc',
-    accentGlow: 'rgba(192, 132, 252, 0.4)',
+    bg: ['#1c1633', '#0d1117', '#010409'],          // top -> bottom
+    orbs: ['rgba(64, 196, 99, 0.16)', 'rgba(121, 82, 179, 0.12)', 'rgba(185, 163, 224, 0.07)'],
+    orbFade: 'rgba(13, 17, 23, 0)',
+    grid: 'rgba(64, 196, 99, 0.05)',
+    glyph: '#40c463',
+    glyphHead: '#b9a3e0',
+    accent: '#40c463',
+    accentGlow: 'rgba(64, 196, 99, 0.4)',
     status: '#86efac',
     statusGlow: 'rgba(134, 239, 172, 0.5)',
     chipBg: 'rgba(134, 239, 172, 0.12)',
-    halo: 'rgba(192, 132, 252, 0.22)',
-    haloFade: 'rgba(192, 132, 252, 0)',
-    avatarFill: '#1a1a26',
-    ring: ['#e9d5ff', '#c084fc', '#9333ea'],
-    orbit: 'rgba(192, 132, 252, 0.45)',
-    title: ['#9333ea', '#f3e8ff', '#c084fc'],
-    titleGlow: 'rgba(192, 132, 252, 0.3)',
-    card: ['#1a1a26', '#14141e'],
+    halo: 'rgba(64, 196, 99, 0.22)',
+    haloFade: 'rgba(64, 196, 99, 0)',
+    avatarFill: '#161b22',
+    ring: ['#b9a3e0', '#40c463', '#7952b3'],
+    orbit: 'rgba(64, 196, 99, 0.45)',
+    title: ['#7952b3', '#d2f5dc', '#40c463'],
+    titleGlow: 'rgba(64, 196, 99, 0.3)',
+    card: ['#161b22', '#0d1117'],
     cardShadow: 'rgba(0, 0, 0, 0.55)',
-    border: ['#e9d5ff', '#c084fc', '#6b21a8'],
-    dash: 'rgba(192, 132, 252, 0.35)',
-    quote: 'rgba(192, 132, 252, 0.18)',
-    senderGlow: 'rgba(192, 132, 252, 0.3)',
-    text: '#fafaff',
-    secondary: '#a1a1b5',
-    muted: '#71718a'
+    border: ['#b9a3e0', '#40c463', '#5a3d8a'],
+    dash: 'rgba(64, 196, 99, 0.35)',
+    quote: 'rgba(64, 196, 99, 0.18)',
+    senderGlow: 'rgba(64, 196, 99, 0.3)',
+    text: '#f0f6fc',
+    secondary: '#8b949e',
+    muted: '#6e7681'
   };
 
   const FONT = {

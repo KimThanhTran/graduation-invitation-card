@@ -1,26 +1,26 @@
 /* ==========================================================================
    Admin — Wish Studio
-   Obsidian + lilac theme. All colors are tokens below; kept
+   Nordic Cyber theme. All colors are tokens below; kept
    separate from style.css so the public page doesn't carry admin styles.
    ========================================================================== */
 
 :root {
-  --bg-page: #111118;
-  --bg-page-glow: #1e1433;
-  --bg-panel: #181822;
-  --bg-input: #111118;
-  --bg-soft: rgba(192, 132, 252, 0.08);
-  --accent: #c084fc;
-  --accent-deep: #9333ea;
-  --accent-ink: #111118;
-  --accent-ring: rgba(192, 132, 252, 0.22);
+  --bg-page: #0d1117;
+  --bg-page-glow: #1c1633;
+  --bg-panel: #161b22;
+  --bg-input: #0d1117;
+  --bg-soft: rgba(64, 196, 99, 0.08);
+  --accent: #40c463;
+  --accent-deep: #7952b3;
+  --accent-ink: #0d1117;
+  --accent-ring: rgba(64, 196, 99, 0.22);
   --shadow: rgba(0, 0, 0, 0.55);
-  --text-strong: #fafaff;
-  --text-primary: #e4e4ee;
-  --text-secondary: #a1a1b5;
-  --text-muted: #71718a;
-  --border-subtle: rgba(192, 132, 252, 0.18);
-  --border-input: rgba(192, 132, 252, 0.35);
+  --text-strong: #f0f6fc;
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --border-subtle: rgba(64, 196, 99, 0.18);
+  --border-input: rgba(64, 196, 99, 0.35);
   --error: #f87171;
   --success: #86efac;
   --radius: 14px;

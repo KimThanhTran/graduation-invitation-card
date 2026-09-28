@@ -74,8 +74,8 @@
   /* ========================================================
    * Celebration Confetti / Particle Engine
    * ======================================================== */
-  const BURST_EMOJIS = ['🎓', '✨', '🎉', '💜', '🔮'];
-  const PETAL_EMOJIS = ['✨', '💜', '🔮', '💫'];
+  const BURST_EMOJIS = ['🎓', '✨', '🎉', '💚', '💜'];
+  const PETAL_EMOJIS = ['✨', '💚', '💜', '🍃'];
 
   class CelebrationFX {
     constructor(canvasId) {
@@ -108,10 +108,10 @@
       const particleCount = Math.min(window.innerWidth < 640 ? 70 : 120, 140);
       
       const colors = [
-        '#c084fc', // Lilac
-        '#e9d5ff', // Soft lavender
-        '#9333ea', // Deep violet
-        '#f3e8ff', // Pale lilac
+        '#40c463', // Mint
+        '#b9a3e0', // Soft purple
+        '#7952b3', // Obsidian purple
+        '#d2f5dc', // Pale mint
         '#d4d4d8', // Platinum
         '#ffffff'  // Pure star white
       ];
@@ -161,7 +161,7 @@
           vx: (Math.random() - 0.5) * 0.6,
           vy: 1.6 + Math.random() * 1.6,
           size: 16 + Math.random() * 12,
-          color: '#e9d5ff',
+          color: '#b9a3e0',
           alpha: 1,
           decay: 0.0028 + Math.random() * 0.0018,
           rotation: Math.random() * 360,
@@ -299,9 +299,9 @@
   async function renderTicketImage(guestName, passId) {
     const W = 1600;
     const H = 800;
-    const ACCENT = '#c084fc';
-    const SOFT_ACCENT = '#e9d5ff';
-    const MUTED = '#a1a1b5';
+    const ACCENT = '#40c463';
+    const SOFT_ACCENT = '#b9a3e0';
+    const MUTED = '#8b949e';
 
     // Make sure web fonts are ready before drawing text on canvas
     if (document.fonts && document.fonts.load) {
@@ -320,27 +320,27 @@
 
     // Background
     const bg = ctx.createRadialGradient(W * 0.35, 0, 50, W / 2, H * 0.4, W * 0.8);
-    bg.addColorStop(0, '#1e1433');
-    bg.addColorStop(0.55, '#111118');
-    bg.addColorStop(1, '#0a0a10');
+    bg.addColorStop(0, '#1c1633');
+    bg.addColorStop(0.55, '#0d1117');
+    bg.addColorStop(1, '#010409');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Card shell with a lilac rim; the stub starts at sx
+    // Card shell with a mint to purple rim; the stub starts at sx
     const cx = 50, cy = 50, cw = W - 100, ch = H - 100;
     const stubW = 400;
     const sx = cx + cw - stubW;
     const notch = 26;
     ticketPath(ctx, cx, cy, cw, ch, 36, sx, notch);
-    ctx.fillStyle = 'rgba(24, 24, 34, 0.92)';
+    ctx.fillStyle = 'rgba(22, 27, 34, 0.92)';
     ctx.fill();
     const border = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
     border.addColorStop(0, ACCENT);
-    border.addColorStop(0.5, '#9333ea');
-    border.addColorStop(1, '#f3e8ff');
+    border.addColorStop(0.5, '#7952b3');
+    border.addColorStop(1, '#d2f5dc');
     ctx.lineWidth = 4;
     ctx.strokeStyle = border;
-    ctx.shadowColor = 'rgba(192, 132, 252, 0.6)';
+    ctx.shadowColor = 'rgba(64, 196, 99, 0.6)';
     ctx.shadowBlur = 30;
     ctx.stroke();
     ctx.shadowBlur = 0;
@@ -348,7 +348,7 @@
     const dashed = (xa, ya, xb, yb, alpha = 0.4) => {
       ctx.save();
       ctx.setLineDash([12, 10]);
-      ctx.strokeStyle = `rgba(192, 132, 252, ${alpha})`;
+      ctx.strokeStyle = `rgba(64, 196, 99, ${alpha})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(xa, ya);
@@ -383,7 +383,7 @@
     const xT = x0 + 150;
     ctx.font = '900 68px Orbitron, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(192, 132, 252, 0.5)';
+    ctx.shadowColor = 'rgba(64, 196, 99, 0.5)';
     ctx.shadowBlur = 24;
     ctx.fillText('GRADUATION', xT, cy + 195);
     const titleGrad = ctx.createLinearGradient(xT, 0, xT + 560, 0);
@@ -415,7 +415,7 @@
       }
     }
     ctx.fillStyle = ACCENT;
-    ctx.shadowColor = 'rgba(192, 132, 252, 0.55)';
+    ctx.shadowColor = 'rgba(64, 196, 99, 0.55)';
     ctx.shadowBlur = 20;
     nameLines.forEach((line, i) => ctx.fillText(line, x0, cy + 448 + i * nameSize * 1.12));
     ctx.shadowBlur = 0;
