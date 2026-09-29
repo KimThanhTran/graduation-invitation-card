@@ -2,7 +2,7 @@
  * Code.gs — Google Apps Script backend for the Graduation RSVP card.
  *
  * Sheet columns (row 1 = header):
- *   A: ID | B: Full Name | C: Status | D: Responded At | E: Wish | F: Wished At | G: Ticket
+ *   A: ID | B: Full Name | C: Status | D: Responded At | E: Wish | F: Wished At | G: Ticket | H: Checked In
  *
  * Open registration: any name can RSVP.
  * - New name      -> append a new row
@@ -16,8 +16,10 @@
  *
  * Tickets go to the Drive folder named TICKET_FOLDER_NAME (created on first use, private to the owner).
  *
- * Admin (admin.html): action "adminAuth" checks the password stored in
- * Project Settings -> Script properties -> ADMIN_PASSWORD and returns guests with their wishes.
+ * Admin (admin.html), all checked against Script properties -> ADMIN_PASSWORD:
+ * - { action: 'adminAuth', password } -> every guest with status, wish, ticket pass id and check-in time
+ * - { action: 'checkin', password, passId, name } -> writes the check-in time in column H
+ *   (found by the ticket's pass id, else by name; only Accepted guests; the first check-in is kept)
  *
  * Deploy as Web app: Execute as "Me", Who has access "Anyone".
  * The sheet itself can stay private (Restricted).
@@ -70,28 +72,93 @@ function json(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function handleAdminAuth(data) {
+/* ---------- Admin (password-protected) ---------- */
+
+// Returns an error response for a missing/wrong password, or null when the password is correct
+function checkAdminPassword(data) {
   const expected = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
   if (!expected) return json({ error: 'ADMIN_PASSWORD is not configured' });
-
   if (String(data.password || '') !== expected) {
     Utilities.sleep(1500); // slow down password guessing
-    return json({ ok: false });
+    return json({ ok: false, auth: false });
   }
+  return null;
+}
 
-  // Columns B..F: Full Name | Status | Responded At | Wish | Wished At
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+// Every guest row with wish, ticket pass id (column G note) and check-in time (column H)
+function listGuests(sheet) {
   const lastRow = sheet.getLastRow();
-  const guests = lastRow < 2 ? [] : sheet.getRange(2, 2, lastRow - 1, 5).getDisplayValues()
-    .filter(r => r[0])
-    .map(r => ({ name: r[0], status: r[1], wish: r[3], wishedAt: r[4] }));
-  return json({ ok: true, guests: guests });
+  if (lastRow < 2) return [];
+  // Columns B..H: Full Name | Status | Responded At | Wish | Wished At | Ticket | Checked In
+  const range = sheet.getRange(2, 2, lastRow - 1, 7);
+  const values = range.getDisplayValues();
+  const passIds = sheet.getRange(2, 7, lastRow - 1, 1).getNotes();
+  return values
+    .map((r, i) => ({
+      id: i + 1,
+      name: r[0],
+      status: r[1],
+      respondedAt: r[2],
+      wish: r[3],
+      wishedAt: r[4],
+      hasTicket: !!r[5],
+      passId: passIds[i][0] || '',
+      checkedInAt: r[6]
+    }))
+    .filter(g => g.name);
+}
+
+function handleAdminAuth(data) {
+  const denied = checkAdminPassword(data);
+  if (denied) return denied;
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  return json({ ok: true, guests: listGuests(sheet) });
+}
+
+// Check a guest in at the ceremony: by the pass id in their ticket QR, else by name
+function handleCheckIn(data) {
+  const denied = checkAdminPassword(data);
+  if (denied) return denied;
+
+  const passId = String(data.passId || '').replace(/[^A-Z0-9-]/gi, '').slice(0, 40);
+  const name = cleanName(data.name);
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const lastRow = sheet.getLastRow();
+    let row = -1;
+    if (passId && lastRow >= 2) {
+      const notes = sheet.getRange(2, 7, lastRow - 1, 1).getNotes();
+      const i = notes.findIndex(n => n[0] === passId);
+      if (i !== -1) row = i + 2;
+    }
+    if (row === -1 && name) row = findGuestRow(sheet, name);
+    if (row === -1) return json({ ok: false, error: 'Guest not found' });
+
+    const guestName = sheet.getRange(row, 2).getValue();
+    if (sheet.getRange(row, 3).getValue() !== 'Accepted') {
+      return json({ ok: false, error: 'Not attending', name: guestName });
+    }
+
+    const cell = sheet.getRange(row, 8);
+    const existing = cell.getDisplayValue();
+    if (existing) return json({ ok: true, already: true, name: guestName, checkedInAt: existing });
+
+    if (!sheet.getRange(1, 8).getValue()) sheet.getRange(1, 8).setValue('Checked In');
+    cell.setValue(nowText());
+    return json({ ok: true, already: false, name: guestName, checkedInAt: cell.getDisplayValue() });
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     if (data.action === 'adminAuth') return handleAdminAuth(data);
+    if (data.action === 'checkin') return handleCheckIn(data);
 
     const name = cleanName(data.name);
 

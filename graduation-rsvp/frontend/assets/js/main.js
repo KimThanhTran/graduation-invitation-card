@@ -311,6 +311,39 @@
   }
 
   /* ========================================================
+   * Post-ceremony mode
+   * After EVENT_END (config.js) the countdown + RSVP give way to a thank-you
+   * section with the photo album. ?mode=after / ?mode=before override it for previews.
+   * ======================================================== */
+  function isEventOver() {
+    const mode = new URLSearchParams(window.location.search).get('mode');
+    if (mode === 'after') return true;
+    if (mode === 'before') return false;
+    const end = Date.parse((window.APP_CONFIG && window.APP_CONFIG.EVENT_END) || '');
+    return !Number.isNaN(end) && Date.now() >= end;
+  }
+
+  function initEventMode() {
+    if (!isEventOver()) return;
+    document.body.classList.add('event-ended');
+
+    const section = document.getElementById('after-event');
+    if (section) section.hidden = false;
+
+    const albumUrl = window.APP_CONFIG && window.APP_CONFIG.ALBUM_URL;
+    const albumLink = document.getElementById('album-link');
+    const albumPending = document.getElementById('album-pending');
+    if (albumUrl && albumLink) {
+      albumLink.href = albumUrl;
+      albumLink.hidden = false;
+      if (albumPending) albumPending.hidden = true;
+    }
+
+    const introSub = document.querySelector('.intro-sub');
+    if (introSub) introSub.textContent = 'Cảm ơn bạn đã đến chung vui cùng mình!';
+  }
+
+  /* ========================================================
    * Initialize All Modules on DOM Ready
    * ======================================================== */
   document.addEventListener('DOMContentLoaded', () => {
@@ -334,6 +367,7 @@
     }
 
     // 5. Initialize Micro-Interactions
+    initEventMode();
     initPhotoTilt();
     initShareButton();
 

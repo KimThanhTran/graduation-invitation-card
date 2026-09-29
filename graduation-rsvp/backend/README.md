@@ -5,8 +5,8 @@ The sheet can stay **private** — the script runs with the owner's permissions.
 
 ## Sheet format (first tab, row 1 = header)
 
-| ID | Full Name | Status | Responded At | Wish | Wished At | Ticket |
-|----|-----------|--------|--------------|------|-----------|--------|
+| ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Checked In |
+|----|-----------|--------|--------------|------|-----------|--------|------------|
 
 Open registration: anyone with the link can RSVP.
 
@@ -43,15 +43,25 @@ you to authorize Drive access.
 5. Paste it into `API_URL` in `frontend/assets/js/config.js`.
 6. Set the sheet's sharing back to **Restricted**.
 
-## Admin password (Wish Studio)
+## Admin password
 
-`frontend/admin.html` asks for a password, checked here by the `adminAuth` action.
-The password lives only in Apps Script, never in the repo:
+`frontend/admin.html` (dashboard, QR check-in, Wish Studio) asks for a password, checked
+here by the `adminAuth` and `checkin` actions. The password lives only in Apps Script,
+never in the repo:
 
 1. Apps Script editor → **Project Settings** (⚙️) → **Script properties** → **Add script property**.
 2. Property: `ADMIN_PASSWORD`, Value: your password → **Save**.
 
 Changing the password takes effect immediately (no redeploy needed).
+
+## Check-in
+
+Each confirmed ticket carries a QR code: `HUTGRAD:1:<passId>:<url-encoded name>`.
+The admin **Check-in** tab scans it with the phone camera (or the dashboard's
+manual button) and the `checkin` action writes the arrival time in `Checked In`
+(column H, header added on first use). The guest is found by the pass id stored as
+the `Ticket` cell note, else by name; only `Accepted` guests can check in, and the
+first check-in time is kept.
 
 After editing `Code.gs` later: **Deploy → Manage deployments → Edit → Version: New version**,
 otherwise the URL keeps serving the old code.

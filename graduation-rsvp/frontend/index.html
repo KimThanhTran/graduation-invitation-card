@@ -251,7 +251,7 @@
       </section>
 
       <!-- Cyber Divider -->
-      <div class="cyber-divider" aria-hidden="true">
+      <div class="cyber-divider rsvp-divider" aria-hidden="true">
         <span class="divider-node"></span>
       </div>
 
@@ -355,9 +355,11 @@
                   </div>
                 </div>
 
-                <div class="cyber-barcode" aria-hidden="true">
-                  <div class="barcode-lines"></div>
+                <div class="cyber-barcode">
+                  <canvas class="ticket-qr" id="ticket-qr" width="240" height="240" hidden
+                    aria-label="Mã QR check-in — đưa mã này cho người đón khách quét tại cổng"></canvas>
                   <span class="barcode-id" id="ticket-pass-id">HUT-IT-2026-PASS-XXXX</span>
+                  <span class="qr-hint">Quét mã này tại cổng để check-in</span>
                 </div>
               </div>
             </div>
@@ -445,6 +447,34 @@
         </div>
       </section>
 
+      <!-- After the ceremony: replaces the countdown + RSVP (see EVENT_END in config.js) -->
+      <section class="after-event-section" id="after-event" aria-label="Thank you" hidden>
+        <div class="section-header">
+          <span class="section-tag">// POST-CEREMONY LOG</span>
+          <span class="status-badge badge-confirmed">STATUS: COMPLETED</span>
+        </div>
+
+        <div class="after-event-body">
+          <div class="after-event-icon" aria-hidden="true">🎓</div>
+          <h3 class="after-event-title">THANK YOU FOR COMING</h3>
+          <p class="after-event-lead">Cảm ơn mọi người đã đến chung vui cùng mình!</p>
+          <p class="after-event-text">
+            Buổi lễ tốt nghiệp đã khép lại, nhưng những khoảnh khắc hôm ấy sẽ còn ở lại mãi.
+            Cảm ơn bạn vì đã là một phần trong hành trình này — dù có mặt trực tiếp hay gửi lời chúc từ xa. 💚
+          </p>
+
+          <div class="after-event-album">
+            <a class="btn btn-cyber-primary" id="album-link" href="#" target="_blank" rel="noopener noreferrer" hidden>
+              <span class="btn-scan-line"></span>
+              📸 Xem album ảnh buổi lễ
+            </a>
+            <p class="after-event-note" id="album-pending">📸 Album ảnh buổi lễ sẽ được cập nhật tại đây sớm nhé!</p>
+          </div>
+
+          <p class="after-event-sign">— 01.11.2026 · Thu Duc Campus —</p>
+        </div>
+      </section>
+
       <!-- Card Footer -->
       <footer class="card-hud-footer">
         <div class="footer-left">
@@ -464,6 +494,8 @@
   <script src="assets/js/matrix.js"></script>
   <script src="assets/js/countdown.js"></script>
   <script src="assets/js/config.js"></script>
+  <!-- QR code generator for the check-in code on the ticket -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="assets/js/rsvp.js"></script>
   <script src="assets/js/main.js"></script>
 </body>

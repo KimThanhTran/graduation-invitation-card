@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Wish Studio | Admin</title>
+  <title>Admin Console | Graduation</title>
   <meta name="theme-color" content="#0d1117" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,8 +23,8 @@
     <!-- Login -->
     <section class="panel login-panel" id="login-view">
       <span class="panel-tag">// ADMIN ACCESS</span>
-      <h1 class="panel-title">WISH STUDIO</h1>
-      <p class="panel-sub">Tạo ảnh lời chúc để đăng story. Chỉ dành cho chủ thiệp.</p>
+      <h1 class="panel-title">ADMIN CONSOLE</h1>
+      <p class="panel-sub">Thống kê khách mời, check-in bằng QR và tạo ảnh lời chúc. Chỉ dành cho chủ thiệp.</p>
 
       <form id="login-form" novalidate>
         <label class="field">
@@ -36,12 +36,86 @@
       </form>
     </section>
 
-    <!-- Studio -->
-    <section class="studio" id="studio-view" hidden>
+    <!-- Signed-in area: tabs -->
+    <div class="admin-app" id="admin-app" hidden>
+      <nav class="tab-bar" role="tablist" aria-label="Admin sections">
+        <button type="button" class="tab-btn active" role="tab" data-tab="dashboard" aria-selected="true">📊 Tổng quan</button>
+        <button type="button" class="tab-btn" role="tab" data-tab="checkin" aria-selected="false">🎫 Check-in</button>
+        <button type="button" class="tab-btn" role="tab" data-tab="studio" aria-selected="false">🖼️ Wish Studio</button>
+        <span class="tab-spacer"></span>
+        <button type="button" class="btn-link" id="refresh-all-btn">Tải lại dữ liệu</button>
+        <button type="button" class="btn-link" id="logout-btn">Đăng xuất</button>
+      </nav>
+
+    <!-- Dashboard -->
+    <section class="tab-panel" id="tab-dashboard" role="tabpanel">
+      <div class="stat-grid">
+        <div class="stat-card"><span class="stat-label">Phản hồi</span><span class="stat-value" id="stat-total">0</span></div>
+        <div class="stat-card stat-good"><span class="stat-label">Tham dự</span><span class="stat-value" id="stat-accepted">0</span></div>
+        <div class="stat-card"><span class="stat-label">Từ chối</span><span class="stat-value" id="stat-declined">0</span></div>
+        <div class="stat-card"><span class="stat-label">Lời chúc</span><span class="stat-value" id="stat-wishes">0</span></div>
+        <div class="stat-card stat-accent">
+          <span class="stat-label">Đã check-in</span>
+          <span class="stat-value"><span id="stat-checked">0</span><small>/<span id="stat-checked-of">0</span></small></span>
+          <div class="stat-bar"><span id="stat-checked-bar"></span></div>
+        </div>
+      </div>
+
+      <div class="panel guest-panel">
+        <div class="guest-toolbar">
+          <input type="search" id="guest-search" placeholder="Tìm theo tên..." autocomplete="off" />
+          <div class="filter-chips" role="group" aria-label="Lọc theo trạng thái">
+            <button type="button" class="chip active" data-filter="all">Tất cả</button>
+            <button type="button" class="chip" data-filter="Accepted">Tham dự</button>
+            <button type="button" class="chip" data-filter="Declined">Từ chối</button>
+            <button type="button" class="chip" data-filter="checked">Đã check-in</button>
+            <button type="button" class="chip" data-filter="waiting">Chưa check-in</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="guest-table">
+            <thead>
+              <tr><th>#</th><th>Họ tên</th><th>Trạng thái</th><th>Phản hồi lúc</th><th>Lời chúc</th><th>Check-in</th></tr>
+            </thead>
+            <tbody id="guest-tbody"></tbody>
+          </table>
+        </div>
+        <p class="inbox-empty" id="guest-empty" hidden>Không có khách nào khớp bộ lọc.</p>
+      </div>
+    </section>
+
+    <!-- Check-in scanner -->
+    <section class="tab-panel" id="tab-checkin" role="tabpanel" hidden>
+      <div class="panel scanner-panel">
+        <span class="panel-tag">// GATE CHECK-IN</span>
+        <p class="panel-sub">Quét mã QR trên vé của khách. Sheet sẽ ghi giờ check-in vào cột <b>Checked In</b>.</p>
+
+        <div class="scanner-frame" id="scanner-frame">
+          <video id="scanner-video" playsinline muted></video>
+          <div class="scanner-overlay" aria-hidden="true"><span></span></div>
+          <p class="scanner-idle" id="scanner-idle">📷 Camera đang tắt</p>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="scan-toggle-btn">📷 BẮT ĐẦU QUÉT</button>
+        </div>
+
+        <div class="scan-result" id="scan-result" hidden>
+          <span class="scan-result-icon" id="scan-result-icon"></span>
+          <div>
+            <p class="scan-result-title" id="scan-result-title"></p>
+            <p class="scan-result-sub" id="scan-result-sub"></p>
+          </div>
+        </div>
+        <p class="feedback" id="scanner-feedback" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- Wish Studio -->
+    <section class="studio tab-panel" id="tab-studio" role="tabpanel" hidden>
       <div class="panel form-panel">
         <div class="panel-head">
           <span class="panel-tag">// WISH STUDIO</span>
-          <button type="button" class="btn-link" id="logout-btn">Đăng xuất</button>
         </div>
 
         <div class="wish-inbox">
@@ -113,6 +187,7 @@
         <canvas id="wish-canvas" width="1080" height="1920" aria-label="Xem trước ảnh lời chúc"></canvas>
       </div>
     </section>
+    </div>
 
   </main>
 

@@ -5,7 +5,7 @@
  * - State management: idle -> checking -> confirmed | declined
  * - Guest verification & RSVP storage via Google Apps Script + Google Sheet
  * - Celebratory cyber particle burst system on #celebration-canvas
- * - High-tech confirmation ticket with unique pass hash
+ * - High-tech confirmation ticket with unique pass hash and check-in QR code
  * - Calendar integration (.ics export / Google Calendar URL)
  * - Downloadable ticket image (canvas render) & guest wishes
  * - Local storage persistence for seamless guest session
@@ -296,6 +296,47 @@
     return `${t.trimEnd()}…`;
   }
 
+  /* ========================================================
+   * Ticket QR code (scanned by admin.html to check guests in)
+   * Payload: HUTGRAD:1:<passId>:<url-encoded name> (ASCII-only so any scanner decodes it)
+   * ======================================================== */
+  function ticketQrPayload(passId, guestName) {
+    return `HUTGRAD:1:${passId}:${encodeURIComponent(guestName)}`;
+  }
+
+  /**
+   * Draw a QR code as dark modules on a light rounded tile.
+   * Returns false when the QR library didn't load, so callers can fall back.
+   */
+  function drawQrCode(ctx, text, x, y, size, dark = '#0d1117', light = '#f0f6fc') {
+    if (typeof window.qrcode !== 'function') return false;
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+
+    const count = qr.getModuleCount();
+    const quiet = 2; // light margin in modules, needed by scanners
+    const cell = size / (count + quiet * 2);
+
+    ctx.save();
+    ctx.fillStyle = light;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, size, size, size * 0.06);
+    else ctx.rect(x, y, size, size);
+    ctx.fill();
+    ctx.fillStyle = dark;
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) {
+          // +0.5px overlap hides hairline gaps between modules
+          ctx.fillRect(x + (c + quiet) * cell, y + (r + quiet) * cell, cell + 0.5, cell + 0.5);
+        }
+      }
+    }
+    ctx.restore();
+    return true;
+  }
+
   async function renderTicketImage(guestName, passId) {
     const W = 1600;
     const H = 800;
@@ -463,26 +504,32 @@
       ctx.fillStyle = '#ffffff';
       ctx.fillText(fitText(ctx, value, stubInner), sMid, y + size + 8);
     };
-    stubField('GUEST', guestName, cy + 155, 32);
-    stubField('ZONE', 'GUEST AREA — HALL A', cy + 255, 26);
-    stubField('DATE', '01/11/2026 · 08:00 AM', cy + 350, 26);
+    stubField('GUEST', guestName, cy + 145, 32);
+    stubField('ZONE', 'GUEST AREA — HALL A', cy + 220, 24);
+    stubField('DATE', '01/11/2026 · 08:00 AM', cy + 290, 24);
 
-    // Barcode seeded from the pass id, so the same pass always draws the same bars
-    const barW = stubInner - 20, barH = 120;
-    const barX = sMid - barW / 2;
-    const barY = cy + ch - 225;
-    let seed = 7;
-    for (const c of passId) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
-    ctx.fillStyle = ACCENT;
-    for (let bx = barX; bx < barX + barW;) {
-      seed = (seed * 1103515245 + 12345) >>> 0;
-      const w = 2 + (seed % 5);
-      ctx.fillRect(bx, barY, Math.min(w, barX + barW - bx), barH);
-      bx += w + 2 + ((seed >>> 8) % 4);
+    // Check-in QR (admin scans it at the gate)
+    const qrSize = 230;
+    const qrY = cy + 350;
+    const hasQr = drawQrCode(ctx, ticketQrPayload(passId, guestName), sMid - qrSize / 2, qrY, qrSize);
+
+    if (!hasQr) {
+      // QR library unavailable: decorative barcode seeded from the pass id
+      const barW = stubInner - 20, barH = 120;
+      const barX = sMid - barW / 2;
+      let seed = 7;
+      for (const c of passId) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+      ctx.fillStyle = ACCENT;
+      for (let bx = barX; bx < barX + barW;) {
+        seed = (seed * 1103515245 + 12345) >>> 0;
+        const w = 2 + (seed % 5);
+        ctx.fillRect(bx, qrY + 55, Math.min(w, barX + barW - bx), barH);
+        bx += w + 2 + ((seed >>> 8) % 4);
+      }
     }
     ctx.font = '600 22px "JetBrains Mono", monospace';
     ctx.fillStyle = MUTED;
-    ctx.fillText(fitText(ctx, passId, stubInner), sMid, barY + barH + 42);
+    ctx.fillText(fitText(ctx, passId, stubInner), sMid, qrY + qrSize + 42);
 
     return canvas;
   }
@@ -513,6 +560,7 @@
       this.confirmedNameEl = document.getElementById('confirmed-guest-name');
       this.declinedNameEl = document.getElementById('declined-guest-name');
       this.ticketPassIdEl = document.getElementById('ticket-pass-id');
+      this.ticketQrEl = document.getElementById('ticket-qr');
       this.btnAddCalendar = document.getElementById('btn-add-calendar');
       this.btnEditRsvp = document.getElementById('btn-edit-rsvp');
       this.btnReconsider = document.getElementById('btn-reconsider');
@@ -820,6 +868,7 @@
             // A ticket from an earlier visit is on Drive: show that same pass here
             guest.passId = result.passId;
             if (this.ticketPassIdEl) this.ticketPassIdEl.textContent = result.passId;
+            this.renderTicketQr(guest.name, result.passId);
           }
           this.saveState();
         }
@@ -839,9 +888,22 @@
       return `HUT-IT-2026-${code}`;
     }
 
+    /** Draw the check-in QR on the on-page ticket (same payload as the downloadable image) */
+    renderTicketQr(guestName, passId) {
+      const canvas = this.ticketQrEl;
+      if (!canvas || !passId) return;
+      const size = 240; // drawn at 2x, shown smaller via CSS
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, size, size);
+      canvas.hidden = !drawQrCode(ctx, ticketQrPayload(passId, guestName), 0, 0, size);
+    }
+
     showConfirmed(guestName, passId) {
       if (this.confirmedNameEl) this.confirmedNameEl.textContent = guestName;
       if (this.ticketPassIdEl) this.ticketPassIdEl.textContent = passId;
+      this.renderTicketQr(guestName, passId);
 
       this.setState('confirmed');
       window.BgMusic && window.BgMusic.duck();
@@ -901,6 +963,7 @@
               if (this.confirmedNameEl) this.confirmedNameEl.textContent = parsed.name;
               if (!parsed.passId) this.guestData.passId = this.generatePassId();
               if (this.ticketPassIdEl) this.ticketPassIdEl.textContent = this.guestData.passId;
+              this.renderTicketQr(parsed.name, this.guestData.passId);
               this.setState('confirmed');
               // Returning guest whose ticket isn't on Drive yet (e.g. confirmed before tickets were saved)
               setTimeout(() => this.syncTicket(), 1500);
@@ -978,4 +1041,6 @@
 
   // Expose globally
   window.RSVPController = RSVPController;
+  // Exposed for local previews/tests
+  window.GradTicket = { renderTicketImage, ticketQrPayload };
 })();
