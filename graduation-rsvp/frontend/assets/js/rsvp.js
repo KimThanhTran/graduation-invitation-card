@@ -466,7 +466,7 @@
     dashed(x0, detailsTop, x1, detailsTop);
 
     const details = [
-      ['DATE', '01/11/2026'],
+      ['DATE', '08/11/2026'],
       ['TIME', '08:00 AM'],
       ['GATE OPEN', '07:30 AM']
     ];
@@ -506,7 +506,7 @@
     };
     stubField('GUEST', guestName, cy + 145, 32);
     stubField('ZONE', 'GUEST AREA — HALL A', cy + 220, 24);
-    stubField('DATE', '01/11/2026 · 08:00 AM', cy + 290, 24);
+    stubField('DATE', '08/11/2026 · 08:00 AM', cy + 290, 24);
 
     // Check-in QR (admin scans it at the gate)
     const qrSize = 230;
@@ -1028,9 +1028,9 @@
       const location = 'Thu Duc Campus — HUTECH Khu Công nghệ cao TP.HCM';
       const description = 'Lễ Trao Bằng Tốt Nghiệp Kỹ Sư & Cử Nhân Công Nghệ Thông Tin ĐH HUTECH. Giờ đón khách: 07:30 AM.';
       
-      // Target: 2026-11-01 08:00 to 12:00 (UTC+7 -> UTC: 20261101T010000Z to 20261101T050000Z)
-      const startDate = '20261101T010000Z';
-      const endDate = '20261101T050000Z';
+      // Target: 2026-11-08 08:00 to 12:00 (UTC+7 -> UTC: 20261108T010000Z to 20261108T050000Z)
+      const startDate = '20261108T010000Z';
+      const endDate = '20261108T050000Z';
 
       // Open Google Calendar event creation URL directly
       const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;

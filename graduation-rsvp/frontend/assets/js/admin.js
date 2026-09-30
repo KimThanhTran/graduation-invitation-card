@@ -506,7 +506,7 @@
     // Ticket meta
     const meta = [
       ['CEREMONY', 'GRADUATION 2026'],
-      ['DATE', '01.11.2026'],
+      ['DATE', '08.11.2026'],
       ['VENUE', 'THU DUC CAMPUS']
     ];
     meta.forEach(([label, value], i) => {

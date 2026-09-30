@@ -4,7 +4,7 @@ Personal digital graduation invitation card with RSVP.
 
 - **University:** HUTECH University — Faculty of Information Technology
 - **Event:** Graduation ceremony
-- **Date:** November 1, 2026, 08:00 AM
+- **Date:** November 8, 2026, 08:00 AM
 - **Location:** Thu Duc Campus
 
 ## Structure

@@ -287,7 +287,7 @@
 
       const shareData = {
         title: 'GRADUATION INVITATION | HUTECH IT',
-        text: 'Trân trọng kính mời bạn đến tham dự Lễ Tốt Nghiệp — Khoa Công nghệ thông tin, Đại học HUTECH ngày 01/11/2026!',
+        text: 'Trân trọng kính mời bạn đến tham dự Lễ Tốt Nghiệp — Khoa Công nghệ thông tin, Đại học HUTECH ngày 08/11/2026!',
         url: window.location.href
       };
 
