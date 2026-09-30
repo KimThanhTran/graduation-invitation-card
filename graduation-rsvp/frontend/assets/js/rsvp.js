@@ -1026,7 +1026,7 @@
     exportCalendarEvent() {
       const title = 'Lễ Tốt Nghiệp — HUTECH Khoa Công nghệ thông tin';
       const location = 'Thu Duc Campus — HUTECH Khu Công nghệ cao TP.HCM';
-      const description = 'Lễ Trao Bằng Tốt Nghiệp Kỹ Sư & Cử Nhân Công Nghệ Thông Tin ĐH HUTECH. Giờ đón khách: 07:30 AM.';
+      const description = 'Lễ Trao Bằng Tốt Nghiệp Kỹ Sư Công Nghệ Thông Tin ĐH HUTECH. Giờ đón khách: 07:30 AM.';
       
       // Target: 2026-11-08 08:00 to 12:00 (UTC+7 -> UTC: 20261108T010000Z to 20261108T050000Z)
       const startDate = '20261108T010000Z';
