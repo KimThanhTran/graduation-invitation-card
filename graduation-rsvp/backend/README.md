@@ -61,7 +61,8 @@ The admin **Check-in** tab scans it with the phone camera (or the dashboard's
 manual button) and the `checkin` action writes the arrival time in `Checked In`
 (column H, header added on first use). The guest is found by the pass id stored as
 the `Ticket` cell note, else by name; only `Accepted` guests can check in, and the
-first check-in time is kept.
+first check-in time is kept. The dashboard's **Huỷ** button (`uncheckin` action)
+clears a check-in, e.g. after a test scan.
 
 After editing `Code.gs` later: **Deploy → Manage deployments → Edit → Version: New version**,
 otherwise the URL keeps serving the old code.

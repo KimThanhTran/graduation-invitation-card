@@ -989,7 +989,15 @@
       const checkTd = document.createElement('td');
       checkTd.className = 'col-check';
       if (g.checkedInAt) {
-        checkTd.textContent = `✅ ${g.checkedInAt}`;
+        const time = document.createElement('span');
+        time.textContent = `✅ ${g.checkedInAt}`;
+        const undo = document.createElement('button');
+        undo.type = 'button';
+        undo.className = 'btn-mini btn-mini-muted';
+        undo.textContent = 'Huỷ';
+        undo.title = 'Huỷ check-in (ví dụ khi quét thử)';
+        undo.addEventListener('click', () => undoCheckIn(g, undo));
+        checkTd.append(time, undo);
       } else if (accepted) {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -1046,6 +1054,30 @@
       console.error(err);
       btn.disabled = false;
       btn.textContent = 'Thử lại';
+    }
+  }
+
+  async function undoCheckIn(g, btn) {
+    if (!window.confirm(`Huỷ check-in của ${g.name}?`)) return;
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const result = await callAdmin({ action: 'uncheckin', password: password, passId: g.passId || '', name: g.name });
+      if (result.auth === false) {
+        logout();
+        return;
+      }
+      if (!result.ok) throw new Error(result.error || 'Undo failed');
+      g.checkedInAt = '';
+      // A later scan of the same ticket should count again
+      scanner.lastCode = '';
+      renderStats();
+      renderGuestTable();
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Huỷ';
+      alert(`Không huỷ được check-in: ${err.message}`);
     }
   }
 

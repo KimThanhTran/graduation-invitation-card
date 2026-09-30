@@ -656,6 +656,21 @@ select:focus {
   background: var(--bg-soft);
 }
 
+.col-check .btn-mini {
+  margin-left: 0.5rem;
+}
+
+.btn-mini-muted {
+  border-color: rgba(139, 148, 158, 0.45);
+  color: var(--text-secondary);
+}
+
+.btn-mini-muted:hover:not(:disabled) {
+  border-color: var(--error);
+  color: var(--error);
+  background: rgba(248, 113, 113, 0.08);
+}
+
 .btn-mini:disabled {
   opacity: 0.55;
   cursor: wait;

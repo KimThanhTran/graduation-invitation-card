@@ -20,6 +20,7 @@
  * - { action: 'adminAuth', password } -> every guest with status, wish, ticket pass id and check-in time
  * - { action: 'checkin', password, passId, name } -> writes the check-in time in column H
  *   (found by the ticket's pass id, else by name; only Accepted guests; the first check-in is kept)
+ * - { action: 'uncheckin', password, passId, name } -> clears that guest's check-in time
  *
  * Deploy as Web app: Execute as "Me", Who has access "Anyone".
  * The sheet itself can stay private (Restricted).
@@ -115,26 +116,29 @@ function handleAdminAuth(data) {
   return json({ ok: true, guests: listGuests(sheet) });
 }
 
-// Check a guest in at the ceremony: by the pass id in their ticket QR, else by name
+// Guest row for check-in: by the pass id in their ticket QR (column G note), else by name
+function findCheckInRow(sheet, data) {
+  const passId = String(data.passId || '').replace(/[^A-Z0-9-]/gi, '').slice(0, 40);
+  const lastRow = sheet.getLastRow();
+  if (passId && lastRow >= 2) {
+    const notes = sheet.getRange(2, 7, lastRow - 1, 1).getNotes();
+    const i = notes.findIndex(n => n[0] === passId);
+    if (i !== -1) return i + 2;
+  }
+  const name = cleanName(data.name);
+  return name ? findGuestRow(sheet, name) : -1;
+}
+
+// Check a guest in at the ceremony
 function handleCheckIn(data) {
   const denied = checkAdminPassword(data);
   if (denied) return denied;
-
-  const passId = String(data.passId || '').replace(/[^A-Z0-9-]/gi, '').slice(0, 40);
-  const name = cleanName(data.name);
 
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-    const lastRow = sheet.getLastRow();
-    let row = -1;
-    if (passId && lastRow >= 2) {
-      const notes = sheet.getRange(2, 7, lastRow - 1, 1).getNotes();
-      const i = notes.findIndex(n => n[0] === passId);
-      if (i !== -1) row = i + 2;
-    }
-    if (row === -1 && name) row = findGuestRow(sheet, name);
+    const row = findCheckInRow(sheet, data);
     if (row === -1) return json({ ok: false, error: 'Guest not found' });
 
     const guestName = sheet.getRange(row, 2).getValue();
@@ -154,11 +158,30 @@ function handleCheckIn(data) {
   }
 }
 
+// Undo a check-in (e.g. a test scan): clears the guest's column H
+function handleUndoCheckIn(data) {
+  const denied = checkAdminPassword(data);
+  if (denied) return denied;
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const row = findCheckInRow(sheet, data);
+    if (row === -1) return json({ ok: false, error: 'Guest not found' });
+    sheet.getRange(row, 8).clearContent();
+    return json({ ok: true, name: sheet.getRange(row, 2).getValue() });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     if (data.action === 'adminAuth') return handleAdminAuth(data);
     if (data.action === 'checkin') return handleCheckIn(data);
+    if (data.action === 'uncheckin') return handleUndoCheckIn(data);
 
     const name = cleanName(data.name);
 
