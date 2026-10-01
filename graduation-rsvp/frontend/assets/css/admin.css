@@ -640,6 +640,12 @@ select:focus {
   background: rgba(139, 148, 158, 0.12);
 }
 
+.badge-warn {
+  color: #f0b429;
+  background: rgba(240, 180, 41, 0.14);
+  cursor: help;
+}
+
 .btn-mini {
   background: transparent;
   border: 1px solid var(--accent);

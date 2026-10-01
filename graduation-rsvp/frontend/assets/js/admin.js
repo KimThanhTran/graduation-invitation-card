@@ -970,14 +970,25 @@
 
     rows.forEach((g) => {
       const tr = document.createElement('tr');
-      tr.appendChild(cell(String(g.id), 'col-id'));
+      const idCell = cell(String(g.id), 'col-id');
+      if (g.row) idCell.title = `Hàng ${g.row} trong sheet`;
+      tr.appendChild(idCell);
       tr.appendChild(cell(g.name, 'col-name'));
 
       const statusTd = document.createElement('td');
       const badge = document.createElement('span');
       const accepted = g.status === 'Accepted';
-      badge.className = `badge ${accepted ? 'badge-yes' : 'badge-no'}`;
-      badge.textContent = accepted ? 'Tham dự' : g.status === 'Declined' ? 'Từ chối' : (g.status || '—');
+      const declined = g.status === 'Declined';
+      if (accepted || declined) {
+        badge.className = `badge ${accepted ? 'badge-yes' : 'badge-no'}`;
+        badge.textContent = accepted ? 'Tham dự' : 'Từ chối';
+      } else {
+        // The sheet cell holds something the backend can't read as Accepted/Declined
+        badge.className = 'badge badge-warn';
+        badge.textContent = `⚠ ${g.rawStatus || g.status || 'Trống'}`;
+        badge.title = 'Status trong sheet không hợp lệ — sửa thành Accepted hoặc Declined';
+      }
+      if (g.rawStatus && g.rawStatus !== g.status) badge.title = `Trong sheet ghi: "${g.rawStatus}"`;
       statusTd.appendChild(badge);
       tr.appendChild(statusTd);
 
@@ -1048,7 +1059,9 @@
       if (!result.ok) {
         btn.disabled = false;
         btn.textContent = 'Thử lại';
-        alert(result.error === 'Not attending' ? `${g.name} chưa xác nhận tham dự.` : `Không check-in được: ${result.error || 'lỗi'}`);
+        alert(result.error === 'Not attending'
+          ? `${g.name} chưa xác nhận tham dự.\nStatus trong sheet: "${result.status || ''}"`
+          : `Không check-in được: ${result.error || 'lỗi'}`);
       }
     } catch (err) {
       console.error(err);
@@ -1166,7 +1179,8 @@
       } else if (result.ok) {
         showScanResult('already', `${result.name} đã check-in rồi`, `Lúc ${result.checkedInAt}`);
       } else if (result.error === 'Not attending') {
-        showScanResult('error', `${result.name || ticket.name} chưa xác nhận tham dự`, 'Trạng thái trong sheet không phải Accepted.');
+        showScanResult('error', `${result.name || ticket.name} chưa xác nhận tham dự`,
+          `Status trong sheet: "${result.status || ''}" (cần là Accepted).`);
       } else {
         showScanResult('error', 'Không tìm thấy khách', `${ticket.name} · ${ticket.passId}`);
       }

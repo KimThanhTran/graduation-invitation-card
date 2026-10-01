@@ -22,6 +22,9 @@
  *   (found by the ticket's pass id, else by name; only Accepted guests; the first check-in is kept)
  * - { action: 'uncheckin', password, passId, name } -> clears that guest's check-in time
  *
+ * Status cells are read leniently (case, spaces, accents, "Tham dự" / "Từ chối"), see canonicalStatus().
+ * Check-ins and errors are logged as JSON lines: Apps Script editor -> Executions.
+ *
  * Deploy as Web app: Execute as "Me", Who has access "Anyone".
  * The sheet itself can stay private (Restricted).
  */
@@ -39,6 +42,23 @@ function cleanName(s) {
   return String(s || '').trim().replace(/\s+/g, ' ').slice(0, 100);
 }
 
+// Status typed by hand may differ in case, spacing, accents or language:
+// "accepted ", "Tham dự", "TU CHOI"... -> 'Accepted' / 'Declined' (anything else is returned trimmed)
+const ACCEPTED_WORDS = ['accepted', 'accept', 'attending', 'yes', 'tham du', 'co', 'co tham du'];
+const DECLINED_WORDS = ['declined', 'decline', 'not attending', 'no', 'tu choi', 'khong', 'khong tham du'];
+
+function canonicalStatus(value) {
+  const key = normalize(value);
+  if (ACCEPTED_WORDS.includes(key)) return 'Accepted';
+  if (DECLINED_WORDS.includes(key)) return 'Declined';
+  return String(value == null ? '' : value).trim();
+}
+
+// One JSON line per event in Apps Script > Executions (never logs passwords or ticket images)
+function logEvent(event, details) {
+  console.log(JSON.stringify(Object.assign({ event: event }, details || {})));
+}
+
 // Prevent a name like "=HYPERLINK(...)" from being stored as a formula
 function safeCell(s) {
   return /^[=+\-@]/.test(s) ? "'" + s : s;
@@ -53,6 +73,16 @@ function findGuestRow(sheet, name) {
     if (normalize(names[i][0]) === target) return i + 2; // actual sheet row
   }
   return -1;
+}
+
+// Highest ID in column A + 1, so deleted or inserted rows never cause duplicate IDs
+function nextGuestId(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 1;
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues()
+    .map(r => Number(r[0]))
+    .filter(n => Number.isFinite(n));
+  return (ids.length ? Math.max.apply(null, ids) : 0) + 1;
 }
 
 // Cap for all wishes stacked on one row (a Sheets cell holds up to 50,000 chars)
@@ -80,6 +110,7 @@ function checkAdminPassword(data) {
   const expected = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
   if (!expected) return json({ error: 'ADMIN_PASSWORD is not configured' });
   if (String(data.password || '') !== expected) {
+    logEvent('admin_auth_failed', { action: data.action });
     Utilities.sleep(1500); // slow down password guessing
     return json({ ok: false, auth: false });
   }
@@ -90,21 +121,22 @@ function checkAdminPassword(data) {
 function listGuests(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
-  // Columns B..H: Full Name | Status | Responded At | Wish | Wished At | Ticket | Checked In
-  const range = sheet.getRange(2, 2, lastRow - 1, 7);
-  const values = range.getDisplayValues();
+  // Columns A..H: ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Checked In
+  const values = sheet.getRange(2, 1, lastRow - 1, 8).getDisplayValues();
   const passIds = sheet.getRange(2, 7, lastRow - 1, 1).getNotes();
   return values
     .map((r, i) => ({
-      id: i + 1,
-      name: r[0],
-      status: r[1],
-      respondedAt: r[2],
-      wish: r[3],
-      wishedAt: r[4],
-      hasTicket: !!r[5],
+      id: r[0] || String(i + 1),
+      row: i + 2,
+      name: r[1],
+      status: canonicalStatus(r[2]),
+      rawStatus: r[2],
+      respondedAt: r[3],
+      wish: r[4],
+      wishedAt: r[5],
+      hasTicket: !!r[6],
       passId: passIds[i][0] || '',
-      checkedInAt: r[6]
+      checkedInAt: r[7]
     }))
     .filter(g => g.name);
 }
@@ -139,20 +171,30 @@ function handleCheckIn(data) {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
     const row = findCheckInRow(sheet, data);
-    if (row === -1) return json({ ok: false, error: 'Guest not found' });
+    if (row === -1) {
+      logEvent('checkin_not_found', { passId: data.passId || '', name: cleanName(data.name) });
+      return json({ ok: false, error: 'Guest not found' });
+    }
 
     const guestName = sheet.getRange(row, 2).getValue();
-    if (sheet.getRange(row, 3).getValue() !== 'Accepted') {
-      return json({ ok: false, error: 'Not attending', name: guestName });
+    const rawStatus = sheet.getRange(row, 3).getDisplayValue();
+    if (canonicalStatus(rawStatus) !== 'Accepted') {
+      logEvent('checkin_not_attending', { row: row, name: guestName, status: rawStatus });
+      return json({ ok: false, error: 'Not attending', name: guestName, status: rawStatus });
     }
 
     const cell = sheet.getRange(row, 8);
     const existing = cell.getDisplayValue();
-    if (existing) return json({ ok: true, already: true, name: guestName, checkedInAt: existing });
+    if (existing) {
+      logEvent('checkin_repeat', { row: row, name: guestName, checkedInAt: existing });
+      return json({ ok: true, already: true, name: guestName, checkedInAt: existing });
+    }
 
     if (!sheet.getRange(1, 8).getValue()) sheet.getRange(1, 8).setValue('Checked In');
     cell.setValue(nowText());
-    return json({ ok: true, already: false, name: guestName, checkedInAt: cell.getDisplayValue() });
+    const checkedInAt = cell.getDisplayValue();
+    logEvent('checkin_ok', { row: row, name: guestName, via: data.passId ? 'qr' : 'manual', checkedInAt: checkedInAt });
+    return json({ ok: true, already: false, name: guestName, checkedInAt: checkedInAt });
   } finally {
     lock.releaseLock();
   }
@@ -168,17 +210,26 @@ function handleUndoCheckIn(data) {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
     const row = findCheckInRow(sheet, data);
-    if (row === -1) return json({ ok: false, error: 'Guest not found' });
-    sheet.getRange(row, 8).clearContent();
-    return json({ ok: true, name: sheet.getRange(row, 2).getValue() });
+    if (row === -1) {
+      logEvent('uncheckin_not_found', { passId: data.passId || '', name: cleanName(data.name) });
+      return json({ ok: false, error: 'Guest not found' });
+    }
+    const cell = sheet.getRange(row, 8);
+    const previous = cell.getDisplayValue();
+    cell.clearContent();
+    const guestName = sheet.getRange(row, 2).getValue();
+    logEvent('uncheckin_ok', { row: row, name: guestName, previous: previous });
+    return json({ ok: true, name: guestName });
   } finally {
     lock.releaseLock();
   }
 }
 
 function doPost(e) {
+  let action = 'unknown';
   try {
     const data = JSON.parse(e.postData.contents);
+    action = String(data.action || 'rsvp');
     if (data.action === 'adminAuth') return handleAdminAuth(data);
     if (data.action === 'checkin') return handleCheckIn(data);
     if (data.action === 'uncheckin') return handleUndoCheckIn(data);
@@ -202,7 +253,7 @@ function doPost(e) {
 
       if (row === -1) {
         const newRow = sheet.getLastRow() + 1;
-        sheet.getRange(newRow, 1, 1, 4).setValues([[newRow - 1, safeCell(name), data.status, now]]);
+        sheet.getRange(newRow, 1, 1, 4).setValues([[nextGuestId(sheet), safeCell(name), data.status, now]]);
         return json({ saved: true, isNew: true, name: name });
       }
 
@@ -214,6 +265,7 @@ function doPost(e) {
       lock.releaseLock();
     }
   } catch (err) {
+    console.error(JSON.stringify({ event: 'error', action: action, error: String(err), stack: err && err.stack }));
     return json({ error: String(err) });
   }
 }
@@ -270,7 +322,7 @@ function saveTicket(name, passId, image) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
     const row = findGuestRow(sheet, name);
     if (row === -1) return json({ error: 'Guest not found' });
-    if (sheet.getRange(row, 3).getValue() !== 'Accepted') return json({ error: 'Not attending' });
+    if (canonicalStatus(sheet.getRange(row, 3).getDisplayValue()) !== 'Accepted') return json({ error: 'Not attending' });
 
     const cell = sheet.getRange(row, 7);
     // Already saved (earlier visit, other device, or a retried request): keep the first ticket

@@ -64,5 +64,22 @@ the `Ticket` cell note, else by name; only `Accepted` guests can check in, and t
 first check-in time is kept. The dashboard's **Huỷ** button (`uncheckin` action)
 clears a check-in, e.g. after a test scan.
 
+## Status values
+
+`Status` is read leniently: case, extra spaces and accents are ignored, and Vietnamese works too
+(`accepted `, `Tham dự` → Accepted; `Từ chối` → Declined). Anything else (empty, `Maybe`…) is
+shown with a yellow ⚠ badge in the admin dashboard and can't be checked in — fix it to
+`Accepted` or `Declined` in the sheet. New guests get ID = highest ID in column A + 1, so
+deleting or inserting rows by hand never creates duplicate IDs.
+
+## Logs
+
+- **Backend:** Apps Script editor → **Executions** (☰▶ in the left bar). Each request is one
+  run; check-ins write JSON lines such as `{"event":"checkin_ok",...}`,
+  `checkin_not_attending` (with the raw Status), `checkin_not_found`, `uncheckin_ok`,
+  `admin_auth_failed`, and `error` (with the stack). Passwords and images are never logged.
+- **Frontend:** browser DevTools (F12) → **Console** for script errors, **Network** → the
+  request to `script.google.com` → **Response** for what the backend answered.
+
 After editing `Code.gs` later: **Deploy → Manage deployments → Edit → Version: New version**,
 otherwise the URL keeps serving the old code.
