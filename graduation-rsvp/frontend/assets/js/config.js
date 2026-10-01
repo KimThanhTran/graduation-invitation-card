@@ -8,7 +8,7 @@ window.APP_CONFIG = Object.freeze({
 
   // After this moment the card switches to "thank you" mode (countdown + RSVP are replaced).
   // Preview anytime with ?mode=after (or force the normal card with ?mode=before).
-  EVENT_END: '2026-11-08T12:00:00+07:00',
+  EVENT_END: '2026-11-08T13:00:00+07:00',
 
   // Link to the photo album shown after the ceremony (Google Photos / Drive). Leave '' until ready.
   ALBUM_URL: ''

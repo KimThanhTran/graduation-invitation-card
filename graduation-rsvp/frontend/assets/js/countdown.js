@@ -1,7 +1,7 @@
 /**
  * countdown.js
  * Futuristic Digital HUD Countdown
- * Target: November 8, 2026 at 08:00 AM (UTC+7)
+ * Target: November 8, 2026 at 10:30 AM (UTC+7) — guest arrival (ceremony starts 08:30)
  * Features:
  * - Precise second-by-second calculation
  * - Cyber digital glow and glitch tick animation
@@ -11,8 +11,8 @@
 (function () {
   'use strict';
 
-  // Target: November 8, 2026 at 08:00 AM ICT (UTC+7)
-  const TARGET_DATE = new Date('2026-11-08T08:00:00+07:00').getTime();
+  // Target: guest arrival, November 8, 2026 at 10:30 AM ICT (UTC+7)
+  const TARGET_DATE = new Date('2026-11-08T10:30:00+07:00').getTime();
 
   class CountdownTimer {
     constructor() {
@@ -73,7 +73,7 @@
       const now = Date.now();
       const distance = TARGET_DATE - now;
 
-      // Event is currently happening (within 6 hours after 08:00)
+      // Event is currently happening (within 6 hours after 10:30)
       if (distance <= 0 && distance >= -6 * 60 * 60 * 1000) {
         this.setPassedState(
           'CEREMONY LIVE',
