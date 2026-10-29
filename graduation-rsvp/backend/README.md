@@ -5,8 +5,8 @@ The sheet can stay **private** — the script runs with the owner's permissions.
 
 ## Sheet format (first tab, row 1 = header)
 
-| ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Checked In |
-|----|-----------|--------|--------------|------|-----------|--------|------------|
+| ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Updated At | Checked In |
+|----|-----------|--------|--------------|------|-----------|--------|------------|------------|
 
 Open registration: anyone with the link can RSVP.
 
@@ -59,7 +59,7 @@ Changing the password takes effect immediately (no redeploy needed).
 Each confirmed ticket carries a QR code: `HUTGRAD:1:<passId>:<url-encoded name>`.
 The admin **Check-in** tab scans it with the phone camera (or the dashboard's
 manual button) and the `checkin` action writes the arrival time in `Checked In`
-(column H, header added on first use). The guest is found by the pass id stored as
+(column I, header added on first use). The guest is found by the pass id stored as
 the `Ticket` cell note, else by name; only `Accepted` guests can check in, and the
 first check-in time is kept. The dashboard's **Huỷ** button (`uncheckin` action)
 clears a check-in, e.g. after a test scan.

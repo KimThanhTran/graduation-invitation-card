@@ -86,8 +86,8 @@ Full steps are in [`graduation-rsvp/backend/README.md`](graduation-rsvp/backend/
 
 1. Create a Google Sheet with this header in row 1 of the first tab:
 
-   | ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Checked In |
-   | --- | --- | --- | --- | --- | --- | --- | --- |
+   | ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Updated At | Checked In |
+   | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 2. Open **Extensions > Apps Script**, replace the default code with `graduation-rsvp/backend/Code.gs`, and save.
 3. Set the Script property `ADMIN_PASSWORD` (Project Settings > Script properties) to protect the admin console.

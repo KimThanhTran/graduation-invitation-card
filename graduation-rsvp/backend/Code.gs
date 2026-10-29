@@ -2,7 +2,11 @@
  * Code.gs — Google Apps Script backend for the Graduation RSVP card.
  *
  * Sheet columns (row 1 = header):
- *   A: ID | B: Full Name | C: Status | D: Responded At | E: Wish | F: Wished At | G: Ticket | H: Checked In
+ *   A: ID | B: Full Name | C: Status | D: Responded At | E: Wish | F: Wished At | G: Ticket |
+ *   H: Updated At | I: Checked In
+ *
+ * Updated At = the guest's latest visit: RSVP (also a repeat RSVP with the same name) or wish.
+ * Sheets made before this column existed are migrated on the next request (see ensureLayout).
  *
  * Open registration: any name can RSVP.
  * - New name      -> append a new row
@@ -18,7 +22,7 @@
  *
  * Admin (admin.html), all checked against Script properties -> ADMIN_PASSWORD:
  * - { action: 'adminAuth', password } -> every guest with status, wish, ticket pass id and check-in time
- * - { action: 'checkin', password, passId, name } -> writes the check-in time in column H
+ * - { action: 'checkin', password, passId, name } -> writes the check-in time in column I
  *   (found by the ticket's pass id, else by name; only Accepted guests; the first check-in is kept)
  * - { action: 'uncheckin', password, passId, name } -> clears that guest's check-in time
  *
@@ -98,6 +102,45 @@ function nowText() {
   return "'" + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'dd/MM/yyyy HH:mm:ss');
 }
 
+// dd/MM/yyyy HH:mm:ss text -> sortable "yyyyMMddHHmmss" ('' when not a timestamp)
+function timeKey(text) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/.exec(String(text || '').trim());
+  return m ? m[3] + m[2] + m[1] + m[4] + m[5] + m[6] : '';
+}
+
+const COL_UPDATED = 8;  // H: Updated At
+const COL_CHECKIN = 9;  // I: Checked In
+
+function touchUpdated(sheet, row, now) {
+  if (!sheet.getRange(1, COL_UPDATED).getValue()) sheet.getRange(1, COL_UPDATED).setValue('Updated At');
+  sheet.getRange(row, COL_UPDATED).setValue(now);
+}
+
+// Older sheets have Checked In in column H: insert Updated At before it and
+// fill it with the later of Responded At / Wished At for every existing guest.
+function ensureLayout(sheet) {
+  if (normalize(sheet.getRange(1, 8).getDisplayValue()) !== 'checked in') return;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    if (normalize(sheet.getRange(1, 8).getDisplayValue()) !== 'checked in') return; // done by another request
+    sheet.insertColumnBefore(8);
+    sheet.getRange(1, 8).setValue('Updated At');
+    const lastRow = sheet.getLastRow();
+    if (lastRow >= 2) {
+      const values = sheet.getRange(2, 4, lastRow - 1, 3).getDisplayValues(); // D..F
+      const updated = values.map(r => {
+        const latest = timeKey(r[2]) > timeKey(r[0]) ? r[2] : r[0];
+        return [latest ? "'" + latest : ''];
+      });
+      sheet.getRange(2, 8, lastRow - 1, 1).setValues(updated);
+    }
+    logEvent('layout_migrated', { rows: Math.max(0, lastRow - 1) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function json(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -117,12 +160,12 @@ function checkAdminPassword(data) {
   return null;
 }
 
-// Every guest row with wish, ticket pass id (column G note) and check-in time (column H)
+// Every guest row with wish, ticket pass id (column G note), last update (H) and check-in time (I)
 function listGuests(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
-  // Columns A..H: ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Checked In
-  const values = sheet.getRange(2, 1, lastRow - 1, 8).getDisplayValues();
+  // Columns A..I: ID | Full Name | Status | Responded At | Wish | Wished At | Ticket | Updated At | Checked In
+  const values = sheet.getRange(2, 1, lastRow - 1, 9).getDisplayValues();
   const passIds = sheet.getRange(2, 7, lastRow - 1, 1).getNotes();
   return values
     .map((r, i) => ({
@@ -136,7 +179,8 @@ function listGuests(sheet) {
       wishedAt: r[5],
       hasTicket: !!r[6],
       passId: passIds[i][0] || '',
-      checkedInAt: r[7]
+      updatedAt: r[7],
+      checkedInAt: r[8]
     }))
     .filter(g => g.name);
 }
@@ -183,14 +227,14 @@ function handleCheckIn(data) {
       return json({ ok: false, error: 'Not attending', name: guestName, status: rawStatus });
     }
 
-    const cell = sheet.getRange(row, 8);
+    const cell = sheet.getRange(row, COL_CHECKIN);
     const existing = cell.getDisplayValue();
     if (existing) {
       logEvent('checkin_repeat', { row: row, name: guestName, checkedInAt: existing });
       return json({ ok: true, already: true, name: guestName, checkedInAt: existing });
     }
 
-    if (!sheet.getRange(1, 8).getValue()) sheet.getRange(1, 8).setValue('Checked In');
+    if (!sheet.getRange(1, COL_CHECKIN).getValue()) sheet.getRange(1, COL_CHECKIN).setValue('Checked In');
     cell.setValue(nowText());
     const checkedInAt = cell.getDisplayValue();
     logEvent('checkin_ok', { row: row, name: guestName, via: data.passId ? 'qr' : 'manual', checkedInAt: checkedInAt });
@@ -200,7 +244,7 @@ function handleCheckIn(data) {
   }
 }
 
-// Undo a check-in (e.g. a test scan): clears the guest's column H
+// Undo a check-in (e.g. a test scan): clears the guest's Checked In cell
 function handleUndoCheckIn(data) {
   const denied = checkAdminPassword(data);
   if (denied) return denied;
@@ -214,7 +258,7 @@ function handleUndoCheckIn(data) {
       logEvent('uncheckin_not_found', { passId: data.passId || '', name: cleanName(data.name) });
       return json({ ok: false, error: 'Guest not found' });
     }
-    const cell = sheet.getRange(row, 8);
+    const cell = sheet.getRange(row, COL_CHECKIN);
     const previous = cell.getDisplayValue();
     cell.clearContent();
     const guestName = sheet.getRange(row, 2).getValue();
@@ -230,6 +274,7 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     action = String(data.action || 'rsvp');
+    ensureLayout(SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]);
     if (data.action === 'adminAuth') return handleAdminAuth(data);
     if (data.action === 'checkin') return handleCheckIn(data);
     if (data.action === 'uncheckin') return handleUndoCheckIn(data);
@@ -254,11 +299,13 @@ function doPost(e) {
       if (row === -1) {
         const newRow = sheet.getLastRow() + 1;
         sheet.getRange(newRow, 1, 1, 4).setValues([[nextGuestId(sheet), safeCell(name), data.status, now]]);
+        touchUpdated(sheet, newRow, now);
         return json({ saved: true, isNew: true, name: name });
       }
 
       // Duplicate name: keep the first response untouched, but let the guest continue (e.g. to send a wish).
       // passId of the ticket already on Drive (if any), so the page shows the same pass.
+      touchUpdated(sheet, row, now);
       const passId = sheet.getRange(row, 7).getNote();
       return json({ saved: true, isNew: false, name: sheet.getRange(row, 2).getValue(), passId: passId || undefined });
     } finally {
@@ -286,7 +333,9 @@ function saveWish(name, message) {
     // Same wish already at the end = a retried request whose first attempt was saved
     if (previous === message || previous.endsWith('\n\n' + message)) return json({ saved: true });
     const wish = previous ? (previous + '\n\n' + message).slice(0, MAX_WISHES_LENGTH) : message;
-    sheet.getRange(row, 5, 1, 2).setValues([[safeCell(wish), nowText()]]);
+    const now = nowText();
+    sheet.getRange(row, 5, 1, 2).setValues([[safeCell(wish), now]]);
+    touchUpdated(sheet, row, now);
     return json({ saved: true });
   } finally {
     lock.releaseLock();
