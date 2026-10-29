@@ -546,7 +546,7 @@ body {
 
 .details-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -651,8 +651,75 @@ body {
   margin-bottom: 0.6rem;
 }
 
-.calendar-chip {
+.calendar-chip,
+.contact-chip {
   cursor: pointer;
+}
+
+/* Contact chip: opens a small menu with "call" and "Zalo" */
+.contact-menu {
+  position: relative;
+}
+
+.detail-card:has(.contact-menu.open) {
+  z-index: 5;
+}
+
+.contact-menu.open .contact-chip {
+  background: var(--neon-cyan);
+  color: #000;
+}
+
+.contact-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: #161b22;
+  border: 1px solid rgba(64, 196, 99, 0.35);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+
+.contact-options[hidden] {
+  display: none;
+}
+
+.contact-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary, #e6edf3);
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
+.contact-option:hover,
+.contact-option:focus-visible {
+  background: rgba(64, 196, 99, 0.12);
+}
+
+.contact-option-icon {
+  font-size: 1.05rem;
+}
+
+.contact-option strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.contact-option small {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--neon-cyan);
 }
 
 .map-link-chip:hover {

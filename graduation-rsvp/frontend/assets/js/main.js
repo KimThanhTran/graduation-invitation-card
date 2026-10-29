@@ -278,6 +278,33 @@
   /* ========================================================
    * Share Button Handler
    * ======================================================== */
+  /* ---------------- Contact menu (call / Zalo) ---------------- */
+  function initContactMenu() {
+    const menu = document.getElementById('contact-menu');
+    const toggle = document.getElementById('contact-toggle');
+    const options = document.getElementById('contact-options');
+    if (!menu || !toggle || !options) return;
+
+    const setOpen = (open) => {
+      options.hidden = !open;
+      menu.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.SoundFX && window.SoundFX.playBeep(720, 0.06);
+      setOpen(options.hidden);
+    });
+    options.addEventListener('click', () => setOpen(false));
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  }
+
   function initShareButton() {
     const shareBtn = document.getElementById('share-btn');
     if (!shareBtn) return;
@@ -370,6 +397,7 @@
     initEventMode();
     initPhotoTilt();
     initShareButton();
+    initContactMenu();
 
     // Card entrance animation plays once the intro gate is opened
     const card = document.getElementById('invitation-card');

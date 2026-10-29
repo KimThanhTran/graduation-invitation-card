@@ -468,7 +468,7 @@
     const details = [
       ['DATE', '08/11/2026'],
       ['GUEST ARRIVAL', '10:30 AM'],
-      ['CEREMONY', '08:30 AM']
+      ['ENDS', '12:00 PM']
     ];
     details.forEach(([label, value], i) => {
       const x = x0 + i * 260;

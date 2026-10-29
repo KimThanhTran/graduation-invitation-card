@@ -1,7 +1,7 @@
 /**
  * countdown.js
  * Futuristic Digital HUD Countdown
- * Target: November 8, 2026 at 10:30 AM (UTC+7) — guest arrival (ceremony starts 08:30)
+ * Target: November 8, 2026 at 10:30 AM (UTC+7) — guest arrival (10:30 – 12:00)
  * Features:
  * - Precise second-by-second calculation
  * - Cyber digital glow and glitch tick animation
