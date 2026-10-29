@@ -505,7 +505,7 @@
       ctx.fillText(fitText(ctx, value, stubInner), sMid, y + size + 8);
     };
     stubField('GUEST', guestName, cy + 145, 32);
-    stubField('ZONE', 'GUEST AREA — HALL A', cy + 220, 24);
+    stubField('ZONE', 'SẢNH TÒA E1', cy + 220, 24);
     stubField('DATE', '08/11/2026 · 10:30 AM', cy + 290, 24);
 
     // Check-in QR (admin scans it at the gate)
@@ -1024,23 +1024,118 @@
     }
 
     exportCalendarEvent() {
-      const title = 'Lễ Tốt Nghiệp — HUTECH Khoa Công nghệ thông tin';
-      const location = 'Thu Duc Campus — HUTECH Khu Công nghệ cao TP.HCM';
-      const description = 'Lễ Trao Bằng Tốt Nghiệp Kỹ Sư Công Nghệ Thông Tin ĐH HUTECH. Giờ đón khách: 10:30 AM (lễ bắt đầu lúc 08:30).';
-      
-      // Guest arrival 2026-11-08 10:30 to 12:30 (UTC+7 -> UTC: 20261108T033000Z to 20261108T053000Z)
-      const startDate = '20261108T033000Z';
-      const endDate = '20261108T053000Z';
-
-      // Open Google Calendar event creation URL directly
-      const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
-      window.open(googleCalUrl, '_blank', 'noopener,noreferrer');
-      window.showCyberToast('📅 Đang mở Google Calendar...');
+      addToCalendar();
     }
   }
+
+  /* ========================================================
+   * Add to calendar
+   * Apple devices get an .ics file (opens straight in the Calendar app);
+   * everything else opens a pre-filled Google Calendar event.
+   * ======================================================== */
+  const CALENDAR_EVENT = {
+    title: 'Lễ Tốt Nghiệp — HUTECH Khoa Công nghệ thông tin',
+    location: 'Thu Duc Campus — HUTECH Khu Công nghệ cao TP.HCM',
+    description: 'Lễ Trao Bằng Tốt Nghiệp Kỹ Sư Công Nghệ Thông Tin ĐH HUTECH. Giờ đón khách: 10:30 AM.',
+    // Guest arrival 2026-11-08 10:30 to 12:00 (UTC+7 -> UTC)
+    start: '20261108T033000Z',
+    end: '20261108T050000Z'
+  };
+
+  // iPadOS reports itself as "Macintosh", so this covers iPhone, iPad and Mac
+  function isAppleDevice() {
+    return /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent || '');
+  }
+
+  // RFC 5545 text escaping: backslash, semicolon, comma, newline
+  function icsText(s) {
+    return String(s)
+      .replace(/\\/g, '\\\\')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,')
+      .replace(/\n/g, '\\n');
+  }
+
+  // RFC 5545 line folding: lines longer than 75 bytes continue on the next line after a space
+  function icsFold(line) {
+    const encoder = new TextEncoder();
+    const parts = [];
+    let current = '';
+    for (const ch of line) {
+      const limit = parts.length ? 74 : 75; // continuation lines start with a space
+      if (encoder.encode(current + ch).length > limit) {
+        parts.push(current);
+        current = ch;
+      } else {
+        current += ch;
+      }
+    }
+    parts.push(current);
+    return parts.join('\r\n ');
+  }
+
+  function buildIcs() {
+    const e = CALENDAR_EVENT;
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//HUTECH IT//Graduation Invitation 2026//VI',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      'UID:graduation-2026-11-08@thanhttk-uef.github.io',
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${e.start}`,
+      `DTEND:${e.end}`,
+      `SUMMARY:${icsText(e.title)}`,
+      `LOCATION:${icsText(e.location)}`,
+      `DESCRIPTION:${icsText(e.description)}`,
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${icsText(e.title)}`,
+      'TRIGGER:-PT2H',
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].map(icsFold).join('\r\n');
+  }
+
+  function googleCalendarUrl() {
+    const e = CALENDAR_EVENT;
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+      `&text=${encodeURIComponent(e.title)}&dates=${e.start}/${e.end}` +
+      `&details=${encodeURIComponent(e.description)}&location=${encodeURIComponent(e.location)}`;
+  }
+
+  function addToCalendar() {
+    window.SoundFX && window.SoundFX.playBeep(720, 0.06);
+    if (isAppleDevice()) {
+      const blob = new Blob([buildIcs()], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'le-tot-nghiep-hutech-08-11-2026.ics';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      window.showCyberToast && window.showCyberToast('📅 Mở file vừa tải để thêm vào Lịch');
+      return;
+    }
+    window.open(googleCalendarUrl(), '_blank', 'noopener,noreferrer');
+    window.showCyberToast && window.showCyberToast('📅 Đang mở Google Calendar...');
+  }
+
+  // The date card's chip works for everyone, before or without an RSVP
+  document.addEventListener('DOMContentLoaded', () => {
+    const chip = document.getElementById('date-add-calendar');
+    if (chip) chip.addEventListener('click', addToCalendar);
+  });
 
   // Expose globally
   window.RSVPController = RSVPController;
   // Exposed for local previews/tests
   window.GradTicket = { renderTicketImage, ticketQrPayload };
+  window.GradCalendar = { addToCalendar, buildIcs, googleCalendarUrl };
 })();

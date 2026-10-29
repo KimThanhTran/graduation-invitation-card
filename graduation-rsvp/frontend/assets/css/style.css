@@ -632,6 +632,29 @@ body {
   transition: all var(--transition-fast);
 }
 
+/* Action chips (map, add to calendar) sit at the bottom of their card, so they line up
+   across cards even when the text above wraps to a different number of lines */
+.card-content:has(.card-action-chip) {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.card-action-chip {
+  display: inline-block;
+  margin-top: auto;
+  line-height: 1.4;
+}
+
+.card-content .detail-sub:has(+ .card-action-chip) {
+  margin-bottom: 0.6rem;
+}
+
+.calendar-chip {
+  cursor: pointer;
+}
+
 .map-link-chip:hover {
   background: var(--neon-cyan);
   color: #000;
