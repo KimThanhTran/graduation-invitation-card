@@ -572,6 +572,8 @@
     tabButtons: document.querySelectorAll('.tab-btn'),
     logoutBtn: $('logout-btn'),
     refreshAllBtn: $('refresh-all-btn'),
+    regenTicketsBtn: $('regen-tickets-btn'),
+    regenFeedback: $('regen-feedback'),
     // Dashboard
     statTotal: $('stat-total'),
     statAccepted: $('stat-accepted'),
@@ -1325,6 +1327,45 @@
     }
   }
 
+  // Re-render every saved ticket with the current design and replace it on Drive (pass ids stay)
+  async function regenTickets() {
+    const list = guests.filter((g) => g.status === 'Accepted' && g.hasTicket && g.passId);
+    if (!list.length) {
+      setFeedback(els.regenFeedback, 'Chưa có vé nào trên Drive để làm mới.', '');
+      return;
+    }
+    if (!window.confirm(`Vẽ lại ${list.length} vé theo mẫu mới và thay file trên Drive?\nMã QR của khách giữ nguyên.`)) return;
+
+    els.regenTicketsBtn.disabled = true;
+    let done = 0;
+    const failed = [];
+    try {
+      for (const g of list) {
+        setFeedback(els.regenFeedback, `Đang làm mới vé ${done + failed.length + 1}/${list.length}: ${g.name}...`, '');
+        try {
+          const canvas = await window.GradTicket.renderTicketImage(g.name, g.passId);
+          const result = await callAdmin({
+            action: 'regenTicket', password: password, passId: g.passId, name: g.name,
+            image: canvas.toDataURL('image/jpeg', 0.9)
+          });
+          if (result.auth === false) { logout(); return; }
+          if (result.ok) done++;
+          else failed.push(g.name);
+        } catch (err) {
+          console.error(err);
+          failed.push(g.name);
+        }
+      }
+      setFeedback(els.regenFeedback,
+        failed.length
+          ? `Đã làm mới ${done}/${list.length} vé. Chưa được: ${failed.join(', ')} — bấm lại để thử tiếp.`
+          : `✓ Đã làm mới ${done} vé trên Drive.`,
+        failed.length ? 'error' : 'success');
+    } finally {
+      els.regenTicketsBtn.disabled = false;
+    }
+  }
+
   function logout() {
     stopScanner();
     password = null;
@@ -1350,6 +1391,7 @@
 
     els.logoutBtn.addEventListener('click', logout);
     els.refreshAllBtn.addEventListener('click', refreshAll);
+    els.regenTicketsBtn.addEventListener('click', regenTickets);
     els.refreshBtn.addEventListener('click', refreshAll);
     els.tabButtons.forEach((btn) => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
 

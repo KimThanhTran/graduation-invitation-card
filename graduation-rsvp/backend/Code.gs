@@ -25,6 +25,8 @@
  * - { action: 'checkin', password, passId, name } -> writes the check-in time in column I
  *   (found by the ticket's pass id, else by name; only Accepted guests; the first check-in is kept)
  * - { action: 'uncheckin', password, passId, name } -> clears that guest's check-in time
+ * - { action: 'regenTicket', password, passId, name, image } -> replaces a guest's saved ticket
+ *   with a freshly rendered one (same pass id, so the QR stays valid; the old file goes to Drive trash)
  *
  * Status cells are read leniently (case, spaces, accents, "Tham dự" / "Từ chối"), see canonicalStatus().
  * Check-ins and errors are logged as JSON lines: Apps Script editor -> Executions.
@@ -269,6 +271,35 @@ function handleUndoCheckIn(data) {
   }
 }
 
+// Admin: swap a guest's Drive ticket for one in the current design
+function handleRegenTicket(data) {
+  const denied = checkAdminPassword(data);
+  if (denied) return denied;
+  const passId = String(data.passId || '').replace(/[^A-Z0-9-]/gi, '').slice(0, 40);
+  const match = /^data:image\/(jpeg|png);base64,(.+)$/.exec(String(data.image || ''));
+  if (!passId || !match || match[2].length > MAX_TICKET_BASE64) return json({ error: 'Invalid ticket' });
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const row = findCheckInRow(sheet, { passId: passId });
+    const cell = row === -1 ? null : sheet.getRange(row, 7);
+    // Only replaces an existing ticket, never issues a new pass id
+    if (!cell || cell.getNote() !== passId) return json({ error: 'Ticket not found' });
+
+    const oldId = (/\/d\/([\w-]+)/.exec(String(cell.getValue())) || [])[1];
+    cell.setValue(createTicketFile(sheet, row, passId, match).getUrl());
+    if (oldId) {
+      try { DriveApp.getFileById(oldId).setTrashed(true); } catch (e) { /* already gone */ }
+    }
+    logEvent('ticket_regenerated', { row: row, name: sheet.getRange(row, 2).getValue() });
+    return json({ ok: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function doPost(e) {
   let action = 'unknown';
   try {
@@ -278,6 +309,7 @@ function doPost(e) {
     if (data.action === 'adminAuth') return handleAdminAuth(data);
     if (data.action === 'checkin') return handleCheckIn(data);
     if (data.action === 'uncheckin') return handleUndoCheckIn(data);
+    if (data.action === 'regenTicket') return handleRegenTicket(data);
 
     const name = cleanName(data.name);
 
@@ -343,6 +375,15 @@ function saveWish(name, message) {
 }
 
 const TICKET_FOLDER_NAME = 'Graduation Tickets';
+
+// match = /^data:image\/(jpeg|png);base64,(.+)$/ result
+function createTicketFile(sheet, row, passId, match) {
+  const ext = match[1] === 'png' ? 'png' : 'jpg';
+  const guest = String(sheet.getRange(row, 2).getValue()).replace(/[\\/:*?"<>|]/g, '');
+  const fileName = (row - 1) + ' - ' + guest + ' - ' + passId + '.' + ext;
+  const blob = Utilities.newBlob(Utilities.base64Decode(match[2]), 'image/' + match[1], fileName);
+  return ticketFolder().createFile(blob);
+}
 const MAX_TICKET_BASE64 = 4 * 1024 * 1024; // ~3 MB image
 
 function ticketFolder() {
@@ -379,13 +420,7 @@ function saveTicket(name, passId, image) {
 
     if (!sheet.getRange(1, 7).getValue()) sheet.getRange(1, 7).setValue('Ticket');
 
-    const ext = match[1] === 'png' ? 'png' : 'jpg';
-    const guest = String(sheet.getRange(row, 2).getValue()).replace(/[\\/:*?"<>|]/g, '');
-    const fileName = (row - 1) + ' - ' + guest + ' - ' + passId + '.' + ext;
-    const blob = Utilities.newBlob(Utilities.base64Decode(match[2]), 'image/' + match[1], fileName);
-    const file = ticketFolder().createFile(blob);
-
-    cell.setValue(file.getUrl()).setNote(passId);
+    cell.setValue(createTicketFile(sheet, row, passId, match).getUrl()).setNote(passId);
     return json({ saved: true, existed: false, passId: passId });
   } finally {
     lock.releaseLock();

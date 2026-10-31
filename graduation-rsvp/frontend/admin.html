@@ -43,6 +43,8 @@
         <button type="button" class="tab-btn" role="tab" data-tab="checkin" aria-selected="false">🎫 Check-in</button>
         <button type="button" class="tab-btn" role="tab" data-tab="studio" aria-selected="false">🖼️ Wish Studio</button>
         <span class="tab-spacer"></span>
+        <button type="button" class="btn-link" id="regen-tickets-btn"
+          title="Vẽ lại vé đã lưu trên Drive theo mẫu mới nhất (mã QR giữ nguyên)">🎫 Làm mới vé</button>
         <button type="button" class="btn-link" id="refresh-all-btn">Tải lại dữ liệu</button>
         <button type="button" class="btn-link" id="logout-btn">Đăng xuất</button>
       </nav>
@@ -60,6 +62,8 @@
           <div class="stat-bar"><span id="stat-checked-bar"></span></div>
         </div>
       </div>
+
+      <p class="feedback" id="regen-feedback" aria-live="polite"></p>
 
       <div class="panel guest-panel">
         <div class="guest-toolbar">
@@ -192,6 +196,9 @@
   </main>
 
   <script src="assets/js/config.js"></script>
+  <!-- Ticket renderer (same as the invitation page) for "Làm mới vé" -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="assets/js/rsvp.js"></script>
   <script src="assets/js/admin.js"></script>
 </body>
 
