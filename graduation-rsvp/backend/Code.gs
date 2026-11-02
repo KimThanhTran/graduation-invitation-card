@@ -65,6 +65,12 @@ function logEvent(event, details) {
   console.log(JSON.stringify(Object.assign({ event: event }, details || {})));
 }
 
+// Guest list = the tab with "Full Name" in B1, so other tabs (e.g. a summary) can sit in front of it
+function guestSheet() {
+  const sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
+  return sheets.find(s => normalize(s.getRange(1, 2).getDisplayValue()) === 'full name') || sheets[0];
+}
+
 // Prevent a name like "=HYPERLINK(...)" from being stored as a formula
 function safeCell(s) {
   return /^[=+\-@]/.test(s) ? "'" + s : s;
@@ -190,7 +196,7 @@ function listGuests(sheet) {
 function handleAdminAuth(data) {
   const denied = checkAdminPassword(data);
   if (denied) return denied;
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  const sheet = guestSheet();
   return json({ ok: true, guests: listGuests(sheet) });
 }
 
@@ -215,7 +221,7 @@ function handleCheckIn(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const sheet = guestSheet();
     const row = findCheckInRow(sheet, data);
     if (row === -1) {
       logEvent('checkin_not_found', { passId: data.passId || '', name: cleanName(data.name) });
@@ -254,7 +260,7 @@ function handleUndoCheckIn(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const sheet = guestSheet();
     const row = findCheckInRow(sheet, data);
     if (row === -1) {
       logEvent('uncheckin_not_found', { passId: data.passId || '', name: cleanName(data.name) });
@@ -282,7 +288,7 @@ function handleRegenTicket(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const sheet = guestSheet();
     const row = findCheckInRow(sheet, { passId: passId });
     const cell = row === -1 ? null : sheet.getRange(row, 7);
     // Only replaces an existing ticket, never issues a new pass id
@@ -305,7 +311,7 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     action = String(data.action || 'rsvp');
-    ensureLayout(SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]);
+    ensureLayout(guestSheet());
     if (data.action === 'adminAuth') return handleAdminAuth(data);
     if (data.action === 'checkin') return handleCheckIn(data);
     if (data.action === 'uncheckin') return handleUndoCheckIn(data);
@@ -324,7 +330,7 @@ function doPost(e) {
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try {
-      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+      const sheet = guestSheet();
       const row = findGuestRow(sheet, name);
       const now = nowText();
 
@@ -356,7 +362,7 @@ function saveWish(name, message) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const sheet = guestSheet();
     const row = findGuestRow(sheet, name);
     if (row === -1) return json({ error: 'Guest not found' });
 
@@ -409,7 +415,7 @@ function saveTicket(name, passId, image) {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const sheet = guestSheet();
     const row = findGuestRow(sheet, name);
     if (row === -1) return json({ error: 'Guest not found' });
     if (canonicalStatus(sheet.getRange(row, 3).getDisplayValue()) !== 'Accepted') return json({ error: 'Not attending' });
