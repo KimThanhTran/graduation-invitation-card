@@ -381,6 +381,28 @@ select:focus {
   min-width: 0;
 }
 
+/* Ticket picker in the guest table */
+.col-pick {
+  width: 2.2rem;
+  text-align: center;
+}
+
+.col-pick input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.col-pick input:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.ticket-bar {
+  margin-top: 1rem;
+}
+
 .bulk-bar {
   margin-top: 0.8rem;
 }

@@ -585,6 +585,9 @@
     guestSearch: $('guest-search'),
     filterChips: document.querySelectorAll('.filter-chips .chip'),
     guestTbody: $('guest-tbody'),
+    ticketPickAll: $('ticket-pick-all'),
+    ticketDownloadBtn: $('ticket-download-btn'),
+    ticketDownloadFeedback: $('ticket-download-feedback'),
     guestEmpty: $('guest-empty'),
     // Check-in scanner
     scanToggleBtn: $('scan-toggle-btn'),
@@ -965,6 +968,50 @@
     return td;
   }
 
+  /* ---------- Ticket download (selected guests -> ZIP) ---------- */
+  // Keyed by pass id so the selection survives search/filter changes and reloads
+  const pickedTickets = new Set();
+
+  const hasTicket = (g) => g.status === 'Accepted' && !!g.passId;
+
+  function updateTicketBar() {
+    const visible = guests.filter(guestMatchesFilter).filter(hasTicket);
+    const pickedVisible = visible.filter((g) => pickedTickets.has(g.passId)).length;
+    els.ticketPickAll.disabled = !visible.length;
+    els.ticketPickAll.checked = visible.length > 0 && pickedVisible === visible.length;
+    els.ticketPickAll.indeterminate = pickedVisible > 0 && pickedVisible < visible.length;
+    const n = guests.filter((g) => hasTicket(g) && pickedTickets.has(g.passId)).length;
+    els.ticketDownloadBtn.disabled = !n;
+    els.ticketDownloadBtn.textContent = n ? `🎫 TẢI ${n} VÉ ĐÃ CHỌN` : '🎫 TẢI VÉ ĐÃ CHỌN';
+  }
+
+  async function downloadPickedTickets() {
+    const chosen = guests.filter((g) => hasTicket(g) && pickedTickets.has(g.passId));
+    if (!chosen.length) return;
+
+    els.ticketDownloadBtn.disabled = true;
+    try {
+      const JSZip = await loadJSZip();
+      const zip = new JSZip();
+      for (let i = 0; i < chosen.length; i++) {
+        const g = chosen[i];
+        setFeedback(els.ticketDownloadFeedback, `Đang vẽ vé ${i + 1}/${chosen.length}: ${g.name}...`, '');
+        const canvas = await window.GradTicket.renderTicketImage(g.name, g.passId);
+        zip.file(`${String(i + 1).padStart(2, '0')}-ve-${slugify(g.name) || 'khach-moi'}-${g.passId}.png`, await blobFromCanvas(canvas));
+        await new Promise((r) => setTimeout(r, 0)); // let the page repaint
+      }
+      setFeedback(els.ticketDownloadFeedback, 'Đang nén file ZIP...', '');
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      saveBlob(zipBlob, `ve-tot-nghiep-${new Date().toISOString().slice(0, 10)}.zip`);
+      setFeedback(els.ticketDownloadFeedback, `✓ Đã tải ${chosen.length} vé.`, 'success');
+    } catch (err) {
+      console.error(err);
+      setFeedback(els.ticketDownloadFeedback, 'Không tạo được file ZIP. Kiểm tra mạng rồi thử lại.', 'error');
+    } finally {
+      updateTicketBar();
+    }
+  }
+
   function renderGuestTable() {
     const rows = guests.filter(guestMatchesFilter);
     els.guestTbody.innerHTML = '';
@@ -972,6 +1019,26 @@
 
     rows.forEach((g) => {
       const tr = document.createElement('tr');
+
+      const pickTd = document.createElement('td');
+      pickTd.className = 'col-pick';
+      const pick = document.createElement('input');
+      pick.type = 'checkbox';
+      pick.setAttribute('aria-label', `Chọn vé của ${g.name}`);
+      if (hasTicket(g)) {
+        pick.checked = pickedTickets.has(g.passId);
+        pick.addEventListener('change', () => {
+          if (pick.checked) pickedTickets.add(g.passId);
+          else pickedTickets.delete(g.passId);
+          updateTicketBar();
+        });
+      } else {
+        pick.disabled = true;
+        pick.title = g.status === 'Accepted' ? 'Khách chưa có vé (chưa mở lại thiệp sau khi xác nhận)' : 'Chỉ khách tham dự mới có vé';
+      }
+      pickTd.appendChild(pick);
+      tr.appendChild(pickTd);
+
       const idCell = cell(String(g.id), 'col-id');
       if (g.row) idCell.title = `Hàng ${g.row} trong sheet`;
       tr.appendChild(idCell);
@@ -1024,6 +1091,7 @@
       tr.appendChild(checkTd);
       els.guestTbody.appendChild(tr);
     });
+    updateTicketBar();
   }
 
   function renderAll() {
@@ -1397,6 +1465,14 @@
 
     // Dashboard filters
     els.guestSearch.addEventListener('input', renderGuestTable);
+    els.ticketPickAll.addEventListener('change', () => {
+      guests.filter(guestMatchesFilter).filter(hasTicket).forEach((g) => {
+        if (els.ticketPickAll.checked) pickedTickets.add(g.passId);
+        else pickedTickets.delete(g.passId);
+      });
+      renderGuestTable();
+    });
+    els.ticketDownloadBtn.addEventListener('click', downloadPickedTickets);
     els.filterChips.forEach((chip) => {
       chip.addEventListener('click', () => {
         guestFilter = chip.dataset.filter;

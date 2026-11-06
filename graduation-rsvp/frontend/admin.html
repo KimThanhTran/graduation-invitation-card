@@ -79,12 +79,18 @@
         <div class="table-wrap">
           <table class="guest-table">
             <thead>
-              <tr><th>#</th><th>Họ tên</th><th>Trạng thái</th><th>Phản hồi lúc</th><th>Lời chúc</th><th>Check-in</th></tr>
+              <tr><th class="col-pick"><input type="checkbox" id="ticket-pick-all" title="Chọn tất cả vé đang hiển thị" /></th><th>#</th><th>Họ tên</th><th>Trạng thái</th><th>Phản hồi lúc</th><th>Lời chúc</th><th>Check-in</th></tr>
             </thead>
             <tbody id="guest-tbody"></tbody>
           </table>
         </div>
         <p class="inbox-empty" id="guest-empty" hidden>Không có khách nào khớp bộ lọc.</p>
+
+        <div class="ticket-bar">
+          <button type="button" class="btn btn-secondary" id="ticket-download-btn" disabled>🎫 TẢI VÉ ĐÃ CHỌN</button>
+          <p class="bulk-hint">Tick ô đầu dòng của khách tham dự để chọn. File ZIP gồm ảnh vé 1600×800 (in đẹp ở cỡ 14×7 hoặc 15×7,5 cm), mã QR giống vé khách đang giữ.</p>
+          <p class="feedback" id="ticket-download-feedback" aria-live="polite"></p>
+        </div>
       </div>
     </section>
 
